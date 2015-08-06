@@ -32,14 +32,15 @@ var Shortener = React.createClass({
 
   shortenURL: function(e) {
     e.preventDefault()
-    slug = this.refs.slugToAdd.getInputDOMNode().value,
+    slug = this.refs.slugToAdd.getInputDOMNode().value
+    owner = this.refs.ownerToAdd.getInputDOMNode().value
     $.ajax({
       url: "/shorten",
       dataType: "json",
       data: {
         slug: slug,
-        long_url: this.refs.longURLToAdd.getInputDOMNode().value
-        owner: this.refs.ownerToAdd.getInputDOMNode().value
+        long_url: this.refs.longURLToAdd.getInputDOMNode().value,
+        owner: owner
       },
       type: "POST",
       success: function() {
@@ -47,11 +48,11 @@ var Shortener = React.createClass({
         clickText = "http://go/"+ slug;
         this.refreshList();
         flash = <Alert bsStyle="success">Successfully linked URL: <textarea id="copy-text" rows="1" cols="10" defaultValue={clickText}/></Alert>
-        this.setState({copyText: clickText, flash: flash});
+        this.setState({copyText: clickText, currentOwner: owner, flash: flash});
       }.bind(this),
       error: function(xhr, status, err) {
         console.error("error linking URL", xhr.responseJSON);
-        this.setState({flash: <Alert bsStyle="danger">{xhr.responseJSON.error}</Alert>});
+        this.setState({currentOwner: owner, flash: <Alert bsStyle="danger">{xhr.responseJSON.error}</Alert>});
       }.bind(this)
     });
   },
@@ -66,12 +67,12 @@ var Shortener = React.createClass({
       success: function(data) {
         flash = <Alert bsStyle="success">Successfully deleted URL</Alert>
         console.log("successful post, flash: " , flash);
-        this.setState({flash: flash});
+        this.setState({currentOwner: this.state.currentOwner, flash: flash});
         this.refreshList();
       }.bind(this),
       error: function(xhr, status, err) {
         console.error("error deleting URL", xhr.responseJSON);
-        this.setState({flash: <Alert bsStyle="danger">{xhr.responseJSON.error}</Alert>});
+        this.setState({currentOwner: this.state.currentOwner, flash: <Alert bsStyle="danger">{xhr.responseJSON.error}</Alert>});
       }.bind(this)
     });
   },
@@ -83,18 +84,18 @@ var Shortener = React.createClass({
       type: "GET",
       success: function(data) {
         console.log("fl2: ", this.state.flash);
-        this.setState({flash: this.state.flash, shortList: data});
+        this.setState({currentOwner: this.state.currentOwner, flash: this.state.flash, shortList: data});
       }.bind(this),
       error: function(xhr, status, err) {
         console.error("error getting list", xhr.responseJSON);
-        this.setState({flash: <Alert bsStyle="danger">Error loading data: {xhr.responseJSON.error}</Alert>});
+        this.setState({currentOwner: this.state.currentOwner, flash: <Alert bsStyle="danger">Error loading data: {xhr.responseJSON.error}</Alert>});
       }.bind(this)
     });
   },
 
   getInitialState: function() {
     this.refreshList();
-    return {shortList: []};
+    return {shortList: [], currentOwner: "Nemo"};
   },
 
   render: function() {
@@ -116,7 +117,7 @@ var Shortener = React.createClass({
             <div className="pre-text">→</div>
             <Input ref="longURLToAdd" className="long-url-to-add" pattern="http.*" type="text" defaultValue="http://example.com/lonnnnnnnnnnnng" required></Input>
             <div className="pre-text">owned by</div>
-            <Input ref="ownerToAdd" className="owner-to-add" type="text" defaultValue="Nemo" required></Input>
+            <Input ref="ownerToAdd" className="owner-to-add" type="text" defaultValue={this.state.currentOwner} required></Input>
             <Button onClick={this.shortenURL}>Shorten!</Button>
           </form>
         </div>

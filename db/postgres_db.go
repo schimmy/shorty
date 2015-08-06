@@ -15,11 +15,6 @@ import (
 
 type PostgresDB struct {
 	c          *sql.DB
-	Host       string
-	Port       int
-	User       string
-	Password   string
-	DBName     string
 	SchemaName string
 	TableName  string
 }
@@ -30,6 +25,8 @@ func NewPostgresDB() db.ShortenBackend {
 	pgUser := db.GetOrDefault("PG_USER", "shortener")
 	pgPass := db.GetOrDefault("PG_PASS", "NOPE")
 	pgDatabase := db.GetOrDefault("PG_DB", "shortener")
+	pgSchema := db.GetOrDefault("PG_SCHEMA", "shortener")
+	pgTable := db.GetOrDefault("PG_TABLE", "shortener")
 	pgSSLMode := db.GetOrDefault("PG_SSL", "disable")
 
 	connString := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s", pgHost, pgPort, pgUser, pgPass, pgDatabase, pgSSLMode)
@@ -37,11 +34,15 @@ func NewPostgresDB() db.ShortenBackend {
 	if err != nil {
 		log.Fatal(err)
 	}
-	return &PostgresDB{c: db}
+	return &PostgresDB{
+		c:          db,
+		SchemaName: pgSchema,
+		TableName:  pgTable,
+	}
 }
 
 func (pgDB *PostgresDB) DeleteURL(slug string) error {
-	_, err := pgDB.c.Query("DELETE FROM shortener.shortener WHERE slug=$1", slug)
+	_, err := pgDB.c.Query(fmt.Sprintf("DELETE FROM %s.%s WHERE slug=$1", pgDB.SchemaName, pgDB.TableName), slug)
 	if err != nil {
 		return err
 	}
@@ -53,8 +54,8 @@ func (pgDB *PostgresDB) ShortenURL(slug, longURL, owner string, tags []string, e
 	// postgres & redshift don't have an upsert method yet
 	existingLong, err := pgDB.GetLongURL(slug)
 	if existingLong == "" || err != nil { // TODO figure out what happens on nothing, err?
-		//q := fmt.Sprintf("INSERT INTO shortener.shortener(slug, long_url, expires, modified) VALUES($1, $2, $3, $4)")
-		q := fmt.Sprintf("INSERT INTO shortener.shortener(slug, long_url, owner) VALUES($1, $2, $3)")
+		//q := fmt.Sprintf("INSERT INTO %s.%s(slug, long_url, expires, modified) VALUES($1, $2, $3, $4)")
+		q := fmt.Sprintf("INSERT INTO %s.%s(slug, long_url, owner) VALUES($1, $2, $3)", pgDB.SchemaName, pgDB.TableName)
 		_, err := pgDB.c.Query(q, slug, longURL, owner)
 		if err != nil {
 			return fmt.Errorf("Issue inserting new row for slug: %s, err is: %s", slug, err)
@@ -62,7 +63,7 @@ func (pgDB *PostgresDB) ShortenURL(slug, longURL, owner string, tags []string, e
 		return nil
 	}
 	// Otherwise, upsert
-	q := fmt.Sprintf("UPDATE shortener.shortener SET long_url=$2, owner=$3 WHERE slug=$1")
+	q := fmt.Sprintf("UPDATE %s.%s SET long_url=$2, owner=$3 WHERE slug=$1", pgDB.SchemaName, pgDB.TableName)
 	_, err = pgDB.c.Query(q, slug, longURL, owner)
 	if err != nil {
 		return err
@@ -73,7 +74,7 @@ func (pgDB *PostgresDB) ShortenURL(slug, longURL, owner string, tags []string, e
 
 func (pgDB *PostgresDB) GetLongURL(slug string) (string, error) {
 	//var retObj ShortenObject
-	q := fmt.Sprintf("SELECT long_url FROM shortener.shortener WHERE slug = $1")
+	q := fmt.Sprintf("SELECT long_url FROM %s.%s WHERE slug = $1", pgDB.SchemaName, pgDB.TableName)
 	var long_url string
 	err := pgDB.c.QueryRow(q, slug).Scan(&long_url)
 	if err != nil {
@@ -85,7 +86,7 @@ func (pgDB *PostgresDB) GetLongURL(slug string) (string, error) {
 }
 
 func (pgDB *PostgresDB) GetList() ([]db.ShortenObject, error) {
-	rows, err := pgDB.c.Query(`SELECT slug, long_url, owner FROM shortener.shortener`)
+	rows, err := pgDB.c.Query(fmt.Sprintf("SELECT slug, long_url, owner FROM %s.%s", pgDB.SchemaName, pgDB.TableName))
 	if err != nil {
 		return nil, err
 	}

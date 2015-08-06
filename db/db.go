@@ -10,22 +10,23 @@ import (
 
 	"github.com/garyburd/redigo/redis"
 
-	pq "github.com/lib/pq"
+	_ "github.com/lib/pq"
 )
 
 // ShortenObject holds the metadata and the mapping for a shortened URL
 // I like the NullTime concept from the pq library, so even for other backends
 // let's use it instead of checking whether the date is 0001-01-01
 type ShortenObject struct {
-	Slug     string      `json:"slug",sql:"slug"`
-	LongURL  string      `json:"long_url",sql:"long_url"`
-	Modified pq.NullTime `json:"modified_date",sql:"modified"`
-	Expires  pq.NullTime `json:"expire_date",sql:"expires"`
+	Slug     string    `json:"slug",sql:"slug"`
+	LongURL  string    `json:"long_url",sql:"long_url"`
+	Modified time.Time `json:"modified_date",omitempty`
+	Expires  time.Time `json:"expire_date",omitempty`
 }
 
 // TODO: add tags / who added
 // TODO: add delete URL
 type ShortenBackend interface {
+	DeleteURL(slug string) error
 	ShortenURL(slug, longURL string, expires time.Time) error
 	GetLongURL(slug string) (string, error)
 	GetList() ([]ShortenObject, error)
@@ -58,9 +59,9 @@ func getOrDefault(key, def string) string {
 func NewPostgresDB() ShortenBackend {
 	pgHost := getOrDefault("PG_HOST", "localhost")
 	pgPort := getOrDefault("PG_HOST", "5432")
-	pgUser := getOrDefault("PG_USER", "url_shortener")
+	pgUser := getOrDefault("PG_USER", "shortener")
 	pgPass := getOrDefault("PG_PASS", "NOPE")
-	pgDatabase := getOrDefault("PG_DB", "url_shortener")
+	pgDatabase := getOrDefault("PG_DB", "shortener")
 	pgSSLMode := getOrDefault("PG_SSL", "disable")
 
 	connString := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s", pgHost, pgPort, pgUser, pgPass, pgDatabase, pgSSLMode)
@@ -71,62 +72,78 @@ func NewPostgresDB() ShortenBackend {
 	return &PostgresDB{c: db}
 }
 
+func (pgDB *PostgresDB) DeleteURL(slug string) error {
+	_, err := pgDB.c.Query("DELETE FROM shortener.shortener WHERE slug=$1", slug)
+	if err != nil {
+		return err
+	}
+	log.Printf("Successfully deleted slug: %s", slug)
+	return nil
+
+}
 func (pgDB *PostgresDB) ShortenURL(slug string, longURL string, expires time.Time) error {
 	// postgres & redshift don't have an upsert method yet
 	// TODO: implement upsert functionality
 	existingLong, err := pgDB.GetLongURL(slug)
 	if existingLong == "" || err != nil { // TODO figure out what happens on nothing, err?
-
-		q := fmt.Sprintf("INSERT INTO url_shortener.url_shortener(slug, long_url) VALUES ('%s', '%s')", slug, longURL)
-		_, err := pgDB.c.Query(q)
+		//q := fmt.Sprintf("INSERT INTO shortener.shortener(slug, long_url, expires, modified) VALUES($1, $2, $3, $4)")
+		q := fmt.Sprintf("INSERT INTO shortener.shortener(slug, long_url) VALUES($1, $2)")
+		_, err := pgDB.c.Query(q, slug, longURL)
 		if err != nil {
-			return err
+			return fmt.Errorf("Issue inserting new row for slug: %s, err is: %s", slug, err)
 		}
 		return nil
 	}
-	return fmt.Errorf("other long url exists: %s", existingLong)
+	// Otherwise, upsert
+	q := fmt.Sprintf("UPDATE shortener.shortener SET long_url=$1 WHERE slug=$2")
+	_, err = pgDB.c.Query(q, longURL, slug)
+	if err != nil {
+		return err
+	}
+	log.Printf("Successfully updated slug: %s", slug)
+	return nil
 }
 
 func (pgDB *PostgresDB) GetLongURL(slug string) (string, error) {
 	//var retObj ShortenObject
-	q := fmt.Sprintf("SELECT long_url, expires FROM url_shortener.url_shortener WHERE slug = $1")
-	log.Println("query: ", q)
+	q := fmt.Sprintf("SELECT long_url FROM shortener.shortener WHERE slug = $1")
 	var long_url string
-	var expires pq.NullTime
-	err := pgDB.c.QueryRow(q, slug).Scan(&long_url, &expires)
+	err := pgDB.c.QueryRow(q, slug).Scan(&long_url)
 	if err != nil {
 		return "", err
 	}
-	log.Println("long: ", long_url, expires)
+	log.Println("long: ", long_url)
 	return long_url, nil
 
 }
 
 func (pgDB *PostgresDB) GetList() ([]ShortenObject, error) {
-	rows, err := pgDB.c.Query(`SELECT * FROM url_shortener.url_shortener`)
-	log.Println("rows: ", rows)
+	rows, err := pgDB.c.Query(`SELECT slug, long_url FROM shortener.shortener`)
 	if err != nil {
 		return nil, err
 	}
 	var retObjs []ShortenObject
 	var slug string
 	var long_url string
-	var expires pq.NullTime
-	var modified pq.NullTime
+	//var expires time.Time
+	//var modified time.Time
 	for rows.Next() {
-		err = rows.Scan(&slug, &long_url, &modified, &expires)
+		err = rows.Scan(&slug, &long_url) //, &modified, &expires)
 		if err != nil {
 			return nil, fmt.Errorf("issue scanning row for list: %s", err)
 		}
 		retObjs = append(retObjs, ShortenObject{
-			Slug:     slug,
-			LongURL:  long_url,
-			Expires:  expires,
-			Modified: modified,
+			Slug:    slug,
+			LongURL: long_url,
+			//Expires:  expires,
+			//Modified: modified,
 		})
 	}
-	log.Println("ret objs: ", retObjs)
 	return retObjs, nil
+}
+
+func (redisDB *RedisDB) DeleteURL(slug string) error {
+	return nil
 }
 
 func (redisDB *RedisDB) ShortenURL(slug string, longURL string, expires time.Time) error {
@@ -134,8 +151,8 @@ func (redisDB *RedisDB) ShortenURL(slug string, longURL string, expires time.Tim
 	sObj := ShortenObject{
 		Slug:     slug,
 		LongURL:  longURL,
-		Modified: pq.NullTime{Time: time.Now()},
-		Expires:  pq.NullTime{Time: expires},
+		Modified: time.Now(),
+		Expires:  expires,
 	}
 	serializedObj, err := json.Marshal(sObj)
 	if err != nil {
@@ -168,15 +185,20 @@ func (redisDB *RedisDB) GetLongURL(slug string) (string, error) {
 }
 
 func (redisDB *RedisDB) GetList() ([]ShortenObject, error) {
+
+	//err := redis.Values(c.Do("SCAN", id))
+	//if err != nil {
+	//panic(err)
+	//}
 	returnObj1 := ShortenObject{
 		Slug:     "short1",
 		LongURL:  "longURL1",
-		Modified: pq.NullTime{Time: time.Now()},
+		Modified: time.Now(),
 	}
 	returnObj2 := ShortenObject{
 		Slug:     "short2",
 		LongURL:  "longURL2",
-		Modified: pq.NullTime{Time: time.Now()},
+		Modified: time.Now(),
 	}
 
 	return []ShortenObject{returnObj1, returnObj2}, nil

@@ -25,6 +25,7 @@ func main() {
 	db := db.NewPostgresDB()
 
 	r := mux.NewRouter()
+	r.HandleFunc("/delete", routes.DeleteHandler(db)).Methods("POST")
 	r.HandleFunc("/shorten", routes.ShortenHandler(db)).Methods("POST")
 	r.HandleFunc("/redirect/{slug}", routes.RedirectHandler(db)).Methods("GET")
 	r.HandleFunc("/list", routes.ListHandler(db)).Methods("GET")

@@ -1,3 +1,99 @@
+body {
+  background-color: rgba(0, 124, 216, 0.46);
+}
 h1 {
   color: #DDD;
+}
+
+input:required:invalid  {
+  background-color: rgb(242, 222, 222);
+}
+
+input:required:valid  {
+  background-color: rgba(87, 181, 58, 0.22);
+}
+
+.panel {
+  box-shadow: 0 2px 6px 0 rgba(0, 0, 0, 0.2), 0 25px 50px 0 rgba(0, 0, 0, 0.15)
+}
+
+#header {
+  max-height: 150px;
+  min-height: 50px;
+  background-color: #333;
+}
+
+#footer {
+  height: 25px;
+  margin-top: 20px;
+  padding: 5px;
+}
+
+#logo {
+  max-height: 130px;
+  max-width: 200px;
+  float: left;
+  display: block;
+}
+
+#header h1 {
+  padding: 10px 2px 2px 210px;
+  margin-top: 0px;
+  font-size: 24px;
+}
+
+#shortener {
+  min-width: 400px;
+  max-width: 700px;
+  width: 80%;
+  margin: auto;
+  padding: 10px;
+}
+
+table {
+  margin-top: 10px;
+}
+
+td {
+  border-right: 1px #777;
+}
+
+/* list item section */
+.short-item span {
+
+}
+
+/* insert section */
+input {
+ display: block;
+ float: left;
+}
+.slug-to-add {
+  width: 100px;
+}
+.long-url-to-add {
+  margin-left: 10px;
+  min-width: 200px;
+  max-width: 300px;
+}
+button {
+  margin-left: 10px;
+}
+.add-url {
+  margin: 0 0 10px 10px;
+}
+.pre-text {
+ display: block;
+ float: left;
+ padding: 9px 3px 0 3px;
+}
+.short-item button {
+  padding: 0 3px 0 3px;
+}
+.short-item a {
+  height: 27px;
+}
+.alert textarea {
+  display: block;
+  float: right;
 }

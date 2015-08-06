@@ -1,6 +1,6 @@
-CREATE SCHEMA IF NOT EXISTS url_shortener AUTHORIZATION clever;
+CREATE SCHEMA IF NOT EXISTS shortener AUTHORIZATION shortener;
 
-CREATE TABLE IF NOT EXISTS "url_shortener"."url_shortener" (
+CREATE TABLE IF NOT EXISTS "shortener"."shortener" (
   slug VARCHAR(255) PRIMARY KEY,
   long_url VARCHAR(4000) NOT NULL,
   expires  timestamp without time zone,

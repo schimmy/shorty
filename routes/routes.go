@@ -15,6 +15,7 @@ func returnJson(data interface{}, err error, w http.ResponseWriter, r *http.Requ
 	retCode := 200
 	var content interface{}
 	if err != nil {
+		log.Printf("500 Err: %s", err)
 		data = map[string]interface{}{"error": err.Error()}
 		retCode = 500
 	}
@@ -38,12 +39,25 @@ func ShortenHandler(db db.ShortenBackend) func(http.ResponseWriter, *http.Reques
 		slug := r.PostForm.Get("slug")
 		longURL := r.PostForm.Get("long_url")
 
-		err := db.ShortenURL(slug, longURL, time.Now())
+		// for now set expiry to never
+		var t time.Time
+		err := db.ShortenURL(slug, longURL, t)
 		returnJson(nil, err, w, r)
 		return
 	}
 }
 
+func DeleteHandler(db db.ShortenBackend) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if err := r.ParseForm(); err != nil {
+			returnJson(nil, fmt.Errorf("couldn't parse form: %s", err.Error()), w, r)
+			return
+		}
+		slug := r.PostForm.Get("slug")
+		err := db.DeleteURL(slug)
+		returnJson(nil, err, w, r)
+	}
+}
 func ListHandler(db db.ShortenBackend) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		sObj, err := db.GetList()

@@ -19,6 +19,7 @@ var ShortItem = React.createClass({
       <tr className="short-item">
         <td className="slug"><a href={short_url}>{i.slug}</a></td>
         <td className="long-url"><a href={i.long_url}>{i.long_url}</a></td>
+        <td className="owner">{i.owner}</td>
         <td><Button onClick={this.deleteURL} className="glyphicon glyphicon-remove"></Button></td>
       </tr>
     );
@@ -38,6 +39,7 @@ var Shortener = React.createClass({
       data: {
         slug: slug,
         long_url: this.refs.longURLToAdd.getInputDOMNode().value
+        owner: this.refs.ownerToAdd.getInputDOMNode().value
       },
       type: "POST",
       success: function() {
@@ -113,13 +115,15 @@ var Shortener = React.createClass({
             <Input ref="slugToAdd" className="slug-to-add" type="text" defaultValue="short"></Input>
             <div className="pre-text">→</div>
             <Input ref="longURLToAdd" className="long-url-to-add" pattern="http.*" type="text" defaultValue="http://example.com/lonnnnnnnnnnnng"></Input>
+            <div className="pre-text">owned by</div>
+            <Input ref="ownerToAdd" className="owner-to-add" type="text" defaultValue="Nemo" required></Input>
             <Button onClick={this.shortenURL}>Shorten!</Button>
           </form>
         </div>
         <div className="panel panel-default">
           <div className="panel-heading">Existing URLs</div>
             <table className="table">
-              <thead><th>Slug</th><th>Long URL</th></thead>
+              <thead><th>Slug</th><th>Long URL</th><th>Owner</th></thead>
               <tbody>
                 {existingItems}
               </tbody>

@@ -81,22 +81,21 @@ func (pgDB *PostgresDB) DeleteURL(slug string) error {
 	return nil
 
 }
-func (pgDB *PostgresDB) ShortenURL(slug string, longURL string, expires time.Time) error {
+func (pgDB *PostgresDB) ShortenURL(slug, longURL, owner string, tags []string, expires time.Time) error {
 	// postgres & redshift don't have an upsert method yet
-	// TODO: implement upsert functionality
 	existingLong, err := pgDB.GetLongURL(slug)
 	if existingLong == "" || err != nil { // TODO figure out what happens on nothing, err?
 		//q := fmt.Sprintf("INSERT INTO shortener.shortener(slug, long_url, expires, modified) VALUES($1, $2, $3, $4)")
-		q := fmt.Sprintf("INSERT INTO shortener.shortener(slug, long_url) VALUES($1, $2)")
-		_, err := pgDB.c.Query(q, slug, longURL)
+		q := fmt.Sprintf("INSERT INTO shortener.shortener(slug, long_url, owner) VALUES($1, $2, $3)")
+		_, err := pgDB.c.Query(q, slug, longURL, owner)
 		if err != nil {
 			return fmt.Errorf("Issue inserting new row for slug: %s, err is: %s", slug, err)
 		}
 		return nil
 	}
 	// Otherwise, upsert
-	q := fmt.Sprintf("UPDATE shortener.shortener SET long_url=$1 WHERE slug=$2")
-	_, err = pgDB.c.Query(q, longURL, slug)
+	q := fmt.Sprintf("UPDATE shortener.shortener SET long_url=$2, owner=$3 WHERE slug=$1")
+	_, err = pgDB.c.Query(q, slug, longURL, owner)
 	if err != nil {
 		return err
 	}
@@ -118,23 +117,26 @@ func (pgDB *PostgresDB) GetLongURL(slug string) (string, error) {
 }
 
 func (pgDB *PostgresDB) GetList() ([]ShortenObject, error) {
-	rows, err := pgDB.c.Query(`SELECT slug, long_url FROM shortener.shortener`)
+	rows, err := pgDB.c.Query(`SELECT slug, long_url, owner FROM shortener.shortener`)
 	if err != nil {
 		return nil, err
 	}
 	var retObjs []ShortenObject
 	var slug string
 	var long_url string
+	var owner string
+	//tags :=  []string{}
 	//var expires time.Time
 	//var modified time.Time
 	for rows.Next() {
-		err = rows.Scan(&slug, &long_url) //, &modified, &expires)
+		err = rows.Scan(&slug, &long_url, &owner) //, &modified, &expires)
 		if err != nil {
 			return nil, fmt.Errorf("issue scanning row for list: %s", err)
 		}
 		retObjs = append(retObjs, ShortenObject{
 			Slug:    slug,
 			LongURL: long_url,
+			Owner:   owner,
 			//Expires:  expires,
 			//Modified: modified,
 		})
@@ -146,7 +148,7 @@ func (redisDB *RedisDB) DeleteURL(slug string) error {
 	return nil
 }
 
-func (redisDB *RedisDB) ShortenURL(slug string, longURL string, expires time.Time) error {
+func (redisDB *RedisDB) ShortenURL(slug, longURL, owner string, tags []string, expires time.Time) error {
 	log.Printf("shortening URL: %s to slug: %s", longURL, slug)
 	sObj := ShortenObject{
 		Slug:     slug,

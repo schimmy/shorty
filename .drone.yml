@@ -1,0 +1,19 @@
+image: bradrydzewski/go:1.3
+script:
+  - make build
+notify:
+  email:
+    recipients:
+      - drone@clever.com
+publish:
+  docker:
+    docker_host: $$docker_server
+    email: $$docker_email
+    username: $$docker_username
+    password: $$docker_password
+    image_name: clever/pretty-self-hosted-url-shortener
+    registry_login: true
+    tags:
+      - $(git rev-parse --short HEAD)
+    when:
+      branch: master

@@ -112,9 +112,9 @@ var Shortener = React.createClass({
           <div className="panel-heading">Add or Modify a URL</div>
           <form className="add-url" >
             <div className="pre-text">go/</div>
-            <Input ref="slugToAdd" className="slug-to-add" type="text" defaultValue="short"></Input>
+            <Input ref="slugToAdd" className="slug-to-add" type="text" defaultValue="short" required></Input>
             <div className="pre-text">→</div>
-            <Input ref="longURLToAdd" className="long-url-to-add" pattern="http.*" type="text" defaultValue="http://example.com/lonnnnnnnnnnnng"></Input>
+            <Input ref="longURLToAdd" className="long-url-to-add" pattern="http.*" type="text" defaultValue="http://example.com/lonnnnnnnnnnnng" required></Input>
             <div className="pre-text">owned by</div>
             <Input ref="ownerToAdd" className="owner-to-add" type="text" defaultValue="Nemo" required></Input>
             <Button onClick={this.shortenURL}>Shorten!</Button>

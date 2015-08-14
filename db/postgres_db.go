@@ -2,13 +2,9 @@ package db
 
 import (
 	"database/sql"
-	"encoding/json"
 	"fmt"
 	"log"
-	"os"
 	"time"
-
-	"github.com/garyburd/redigo/redis"
 
 	_ "github.com/lib/pq"
 )
@@ -19,15 +15,15 @@ type PostgresDB struct {
 	TableName  string
 }
 
-func NewPostgresDB() db.ShortenBackend {
-	pgHost := db.GetOrDefault("PG_HOST", "localhost")
-	pgPort := db.GetOrDefault("PG_HOST", "5432")
-	pgUser := db.GetOrDefault("PG_USER", "shortener")
-	pgPass := db.GetOrDefault("PG_PASS", "NOPE")
-	pgDatabase := db.GetOrDefault("PG_DB", "shortener")
-	pgSchema := db.GetOrDefault("PG_SCHEMA", "shortener")
-	pgTable := db.GetOrDefault("PG_TABLE", "shortener")
-	pgSSLMode := db.GetOrDefault("PG_SSL", "disable")
+func NewPostgresDB() ShortenBackend {
+	pgHost := GetOrDefault("PG_HOST", "localhost")
+	pgPort := GetOrDefault("PG_HOST", "5432")
+	pgUser := GetOrDefault("PG_USER", "shortener")
+	pgPass := GetOrDefault("PG_PASS", "NOPE")
+	pgDatabase := GetOrDefault("PG_DB", "shortener")
+	pgSchema := GetOrDefault("PG_SCHEMA", "shortener")
+	pgTable := GetOrDefault("PG_TABLE", "shortener")
+	pgSSLMode := GetOrDefault("PG_SSL", "disable")
 
 	connString := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s", pgHost, pgPort, pgUser, pgPass, pgDatabase, pgSSLMode)
 	db, err := sql.Open("postgres", connString)
@@ -85,12 +81,12 @@ func (pgDB *PostgresDB) GetLongURL(slug string) (string, error) {
 
 }
 
-func (pgDB *PostgresDB) GetList() ([]db.ShortenObject, error) {
+func (pgDB *PostgresDB) GetList() ([]ShortenObject, error) {
 	rows, err := pgDB.c.Query(fmt.Sprintf("SELECT slug, long_url, owner FROM %s.%s", pgDB.SchemaName, pgDB.TableName))
 	if err != nil {
 		return nil, err
 	}
-	var retObjs []db.ShortenObject
+	var retObjs []ShortenObject
 	var slug string
 	var long_url string
 	var owner string
@@ -102,7 +98,7 @@ func (pgDB *PostgresDB) GetList() ([]db.ShortenObject, error) {
 		if err != nil {
 			return nil, fmt.Errorf("issue scanning row for list: %s", err)
 		}
-		retObjs = append(retObjs, db.ShortenObject{
+		retObjs = append(retObjs, ShortenObject{
 			Slug:    slug,
 			LongURL: long_url,
 			Owner:   owner,

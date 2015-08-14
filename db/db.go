@@ -1,16 +1,8 @@
 package db
 
 import (
-	"database/sql"
-	"encoding/json"
-	"fmt"
-	"log"
 	"os"
 	"time"
-
-	"github.com/garyburd/redigo/redis"
-
-	_ "github.com/lib/pq"
 )
 
 // ShortenObject holds the metadata and the mapping for a shortened URL

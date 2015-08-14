@@ -33,14 +33,14 @@ var Shortener = React.createClass({
   shortenURL: function(e) {
     e.preventDefault()
     slug = this.refs.slugToAdd.getInputDOMNode().value
-    owner = this.refs.ownerToAdd.getInputDOMNode().value
+    //owner = this.refs.ownerToAdd.getInputDOMNode().value
     $.ajax({
       url: "/shorten",
       dataType: "json",
       data: {
         slug: slug,
         long_url: this.refs.longURLToAdd.getInputDOMNode().value,
-        owner: owner
+        owner: "Schimmy"
       },
       type: "POST",
       success: function() {

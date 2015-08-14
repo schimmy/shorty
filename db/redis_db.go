@@ -20,7 +20,7 @@ func (redisDB *RedisDB) DeleteURL(slug string) error {
 	return nil
 }
 
-func (redisDB *RedisDB) ShortenURL(slug, longURL, owner string, tags []string, expires time.Time) error {
+func (redisDB *RedisDB) ShortenURL(slug, longURL, owner string, expires time.Time) error {
 	log.Printf("shortening URL: %s to slug: %s", longURL, slug)
 	sObj := ShortenObject{
 		Slug:     slug,

@@ -40,11 +40,10 @@ func ShortenHandler(db db.ShortenBackend) func(http.ResponseWriter, *http.Reques
 		longURL := r.PostForm.Get("long_url")
 		owner := r.PostForm.Get("owner")
 		//tags := r.PostForm.Get("tags")
-		tags := []string{}
 
 		// for now set expiry to never
 		var t time.Time
-		err := db.ShortenURL(slug, longURL, owner, tags, t)
+		err := db.ShortenURL(slug, longURL, owner, t)
 		returnJson(nil, err, w, r)
 		return
 	}

@@ -10,6 +10,7 @@ import (
 // let's use it instead of checking whether the date is 0001-01-01
 type ShortenObject struct {
 	Slug     string    `json:"slug",sql:"slug"`
+	Owner    string    `json:"owner",sql:"owner"`
 	LongURL  string    `json:"long_url",sql:"long_url"`
 	Modified time.Time `json:"modified_date",omitempty`
 	Expires  time.Time `json:"expire_date",omitempty`
@@ -19,7 +20,7 @@ type ShortenObject struct {
 // TODO: add delete URL
 type ShortenBackend interface {
 	DeleteURL(slug string) error
-	ShortenURL(slug, longURL string, expires time.Time) error
+	ShortenURL(slug, longURL, owner string, expires time.Time) error
 	GetLongURL(slug string) (string, error)
 	GetList() ([]ShortenObject, error)
 }

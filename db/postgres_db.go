@@ -46,7 +46,7 @@ func (pgDB *PostgresDB) DeleteURL(slug string) error {
 	return nil
 
 }
-func (pgDB *PostgresDB) ShortenURL(slug, longURL, owner string, tags []string, expires time.Time) error {
+func (pgDB *PostgresDB) ShortenURL(slug, longURL, owner string, expires time.Time) error {
 	// postgres & redshift don't have an upsert method yet
 	existingLong, err := pgDB.GetLongURL(slug)
 	if existingLong == "" || err != nil { // TODO figure out what happens on nothing, err?

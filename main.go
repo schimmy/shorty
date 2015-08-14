@@ -7,9 +7,9 @@ import (
 	"os"
 	"runtime"
 
-	"github.com/Clever/pretty-self-hosted-url-shortener/db"
-	"github.com/Clever/pretty-self-hosted-url-shortener/routes"
 	"github.com/gorilla/mux"
+	"github.com/schimmy/simple-url-shortener/db"
+	"github.com/schimmy/simple-url-shortener/routes"
 )
 
 func main() {

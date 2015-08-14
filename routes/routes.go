@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/Clever/pretty-self-hosted-url-shortener/db"
 	"github.com/gorilla/mux"
+	"github.com/schimmy/simple-url-shortener/db"
 )
 
 func returnJson(data interface{}, err error, w http.ResponseWriter, r *http.Request) {

@@ -1,4 +1,4 @@
-# Pretty Self-Hosted URL Shortener
+# Simple Self-Hosted URL Shortener
 
 What, you need more information than the title?
 

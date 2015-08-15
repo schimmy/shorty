@@ -41,6 +41,12 @@ func ShortenHandler(db db.ShortenBackend) func(http.ResponseWriter, *http.Reques
 		owner := r.PostForm.Get("owner")
 		//tags := r.PostForm.Get("tags")
 
+		for _, reserved := range []string{"delete", "shorten", "list", "Shortener.jsx", "favicon.png"} {
+			if slug == reserved {
+				returnJson(nil, fmt.Errorf("That slug is reserved: %s", slug), w, r)
+				return
+			}
+		}
 		// for now set expiry to never
 		var t time.Time
 		err := db.ShortenURL(slug, longURL, owner, t)
@@ -71,8 +77,14 @@ func ListHandler(db db.ShortenBackend) func(http.ResponseWriter, *http.Request) 
 func RedirectHandler(db db.ShortenBackend) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		slug := mux.Vars(r)["slug"]
-		log.Println("slug: ", slug)
 		long, err := db.GetLongURL(slug)
+		if long == "" {
+			w.WriteHeader(404)
+			w.Write([]byte(
+				fmt.Sprintf("<html>Unable to find long URL for slug: <em>'%s'</em>, please consult <a href='http://go/'>http://go</a> to add this slug.</html>",
+					slug)))
+			return
+		}
 		if err != nil {
 			log.Printf("Error in redirect: %s", err)
 			w.WriteHeader(500)

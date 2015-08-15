@@ -26,8 +26,10 @@ func main() {
 	r := mux.NewRouter()
 	r.HandleFunc("/delete", routes.DeleteHandler(db)).Methods("POST")
 	r.HandleFunc("/shorten", routes.ShortenHandler(db)).Methods("POST")
-	r.HandleFunc("/redirect/{slug}", routes.RedirectHandler(db)).Methods("GET")
 	r.HandleFunc("/list", routes.ListHandler(db)).Methods("GET")
+	r.PathPrefix("/Shortener.jsx").Handler(http.FileServer(http.Dir("./static")))
+	r.PathPrefix("/favicon.png").Handler(http.FileServer(http.Dir("./static")))
+	r.HandleFunc("/{slug}", routes.RedirectHandler(db)).Methods("GET")
 
 	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()

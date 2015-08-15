@@ -17,10 +17,10 @@ type PostgresDB struct {
 
 func NewPostgresDB() ShortenBackend {
 	pgHost := GetOrDefault("PG_HOST", "localhost")
-	pgPort := GetOrDefault("PG_HOST", "5432")
+	pgPort := GetOrDefault("PG_PORT", "5432")
 	pgUser := GetOrDefault("PG_USER", "shortener")
-	pgPass := GetOrDefault("PG_PASS", "NOPE")
-	pgDatabase := GetOrDefault("PG_DB", "shortener")
+	pgPass := GetOrDefault("PG_PASSWORD", "NOPE")
+	pgDatabase := GetOrDefault("PG_DATABASE", "shortener")
 	pgSchema := GetOrDefault("PG_SCHEMA", "shortener")
 	pgTable := GetOrDefault("PG_TABLE", "shortener")
 	pgSSLMode := GetOrDefault("PG_SSL", "disable")

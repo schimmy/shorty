@@ -6,7 +6,7 @@ var Input = ReactBootstrap.Input;
 var ShortItem = React.createClass({
   deleteURL: function(e) {
     e.preventDefault();
-    this.props.deleteURL(this.props.item.slug);
+    this.props.deleteURL(this.props.item.slug, this.props.item.long_url);
   },
 
   render: function() {
@@ -18,7 +18,7 @@ var ShortItem = React.createClass({
         <td className="slug"><a href={shortURL}>go/{i.slug}</a></td>
         <td className="long-url"><a href={i.long_url}>{i.long_url}</a></td>
         <td className="owner">{i.owner}</td>
-        <td><Button onClick={this.deleteURL} className="glyphicon glyphicon-remove"></Button></td>
+        <td className="delete"><Button onClick={this.deleteURL} className="glyphicon glyphicon-remove"></Button></td>
       </tr>
     );
   }
@@ -54,14 +54,14 @@ var Shortener = React.createClass({
     });
   },
 
-  deleteURL: function(slug) {
+  deleteURL: function(slug, longURL) {
     $.ajax({
       url: "/delete",
       dataType: "json",
       data: { slug: slug },
       type: "POST",
       success: function(data) {
-        flash = <Alert bsStyle="success">Successfully deleted URL</Alert>
+        flash = <Alert bsStyle="success">Successfully deleted slug: <em>{slug}</em> pointing to URL: <em>{longURL}</em></Alert>
         console.log("successful post, flash: " , flash);
         this.setState({currentOwner: this.state.currentOwner, flash: flash});
         this.refreshList();
@@ -101,7 +101,7 @@ var Shortener = React.createClass({
       existingItems.push(si)
     });
     return (
-      <div>
+      <div id="inner-shortener">
         {this.state.flash}
         <div className="panel panel-default">
           <div className="panel-heading">Add or Modify a URL</div>

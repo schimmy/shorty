@@ -1,5 +1,5 @@
 SHELL := /bin/bash
-PKG := github.com/schimmy/simple-url-shortener
+PKG := github.com/schimmy/easy-url-shortener
 PKGS := $(PKG)
 EXECUTABLE := shortener
 

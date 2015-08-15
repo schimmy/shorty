@@ -8,8 +8,8 @@ import (
 	"runtime"
 
 	"github.com/gorilla/mux"
-	"github.com/schimmy/simple-url-shortener/db"
-	"github.com/schimmy/simple-url-shortener/routes"
+	"github.com/schimmy/easy-url-shortener/db"
+	"github.com/schimmy/easy-url-shortener/routes"
 )
 
 func main() {

@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-	"github.com/schimmy/simple-url-shortener/db"
+	"github.com/schimmy/easy-url-shortener/db"
 )
 
 func returnJson(data interface{}, err error, w http.ResponseWriter, r *http.Request) {

@@ -33,22 +33,22 @@ var Shortener = React.createClass({
   shortenURL: function(e) {
     e.preventDefault()
     slug = this.refs.slugToAdd.getInputDOMNode().value
-    //owner = this.refs.ownerToAdd.getInputDOMNode().value
+    owner = this.refs.ownerToAdd.getInputDOMNode().value
     $.ajax({
       url: "/shorten",
       dataType: "json",
       data: {
         slug: slug,
         long_url: this.refs.longURLToAdd.getInputDOMNode().value,
-        owner: "Schimmy"
+        owner: owner
       },
       type: "POST",
       success: function() {
         console.log("successful post");
-        clickText = "http://go/"+ slug;
+        newLink = "http://go/"+ slug;
         this.refreshList();
-        flash = <Alert bsStyle="success">Successfully linked URL: <textarea id="copy-text" rows="1" cols="10" defaultValue={clickText}/></Alert>
-        this.setState({copyText: clickText, currentOwner: owner, flash: flash});
+        flash = <Alert bsStyle="success">Successfully linked URL: <a href={newLink}>{newLink}</a></Alert>
+        this.setState({currentOwner: owner, flash: flash});
       }.bind(this),
       error: function(xhr, status, err) {
         console.error("error linking URL", xhr.responseJSON);
@@ -95,7 +95,7 @@ var Shortener = React.createClass({
 
   getInitialState: function() {
     this.refreshList();
-    return {shortList: [], currentOwner: "Nemo"};
+    return {shortList: [], currentOwner: "None"};
   },
 
   render: function() {
@@ -113,11 +113,11 @@ var Shortener = React.createClass({
           <div className="panel-heading">Add or Modify a URL</div>
           <form className="add-url" >
             <div className="pre-text">go/</div>
-            <Input ref="slugToAdd" className="slug-to-add" type="text" defaultValue="short" required></Input>
+            <Input ref="slugToAdd" className="slug-to-add add-item" type="text" defaultValue="short" required></Input>
             <div className="pre-text">→</div>
-            <Input ref="longURLToAdd" className="long-url-to-add" pattern="http.*" type="text" defaultValue="http://example.com/lonnnnnnnnnnnng" required></Input>
+            <Input ref="longURLToAdd" className="long-url-to-add add-item" pattern="http.*" type="text" defaultValue="http://example.com/lonnnnnnnnnnnng" required></Input>
             <div className="pre-text">owned by</div>
-            <Input ref="ownerToAdd" className="owner-to-add" type="text" defaultValue={this.state.currentOwner} required></Input>
+            <Input ref="ownerToAdd" className="owner-to-add add-item" type="text" defaultValue={this.state.currentOwner} required></Input>
             <Button onClick={this.shortenURL}>Shorten!</Button>
           </form>
         </div>

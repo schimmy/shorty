@@ -1,3 +1,5 @@
+CREATE USER shortener WITH PASSWORD 'not-very-secret';
+
 CREATE SCHEMA IF NOT EXISTS shortener AUTHORIZATION shortener;
 
 CREATE TABLE IF NOT EXISTS "shortener"."shortener" (
@@ -7,3 +9,6 @@ CREATE TABLE IF NOT EXISTS "shortener"."shortener" (
   expires  timestamp without time zone,
   modified  timestamp without time zone
 );
+
+GRANT USAGE ON SCHEMA shortener TO shortener;
+GRANT UPDATE, INSERT, SELECT, REFERENCES ON shortener.shortener TO shortener;

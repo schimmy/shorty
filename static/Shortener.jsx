@@ -11,13 +11,11 @@ var ShortItem = React.createClass({
 
   render: function() {
     i = this.props.item
-    //console.log("item: ", i)
-    //modified = i.modified_date ? moment(i.modified_date).format("YYYY/M/D, h:mm:ss") : ""
     //expire = i.expire_date ? moment(i.expire_date).format("YYYY/M/D") : ""
-    short_url = "http://go/" + i.slug
+    shortURL = "http://go/" + i.slug
     return (
       <tr className="short-item">
-        <td className="slug"><a href={short_url}>{i.slug}</a></td>
+        <td className="slug"><a href={shortURL}>go/{i.slug}</a></td>
         <td className="long-url"><a href={i.long_url}>{i.long_url}</a></td>
         <td className="owner">{i.owner}</td>
         <td><Button onClick={this.deleteURL} className="glyphicon glyphicon-remove"></Button></td>
@@ -44,7 +42,6 @@ var Shortener = React.createClass({
       },
       type: "POST",
       success: function() {
-        console.log("successful post");
         newLink = "http://go/"+ slug;
         this.refreshList();
         flash = <Alert bsStyle="success">Successfully linked URL: <a href={newLink}>{newLink}</a></Alert>
@@ -58,7 +55,6 @@ var Shortener = React.createClass({
   },
 
   deleteURL: function(slug) {
-    console.log("val ", slug)
     $.ajax({
       url: "/delete",
       dataType: "json",
@@ -83,7 +79,6 @@ var Shortener = React.createClass({
       dataType: "json",
       type: "GET",
       success: function(data) {
-        console.log("fl2: ", this.state.flash);
         this.setState({currentOwner: this.state.currentOwner, flash: this.state.flash, shortList: data});
       }.bind(this),
       error: function(xhr, status, err) {
@@ -102,7 +97,6 @@ var Shortener = React.createClass({
     existingItems = [];
     _this = this
     _.each(this.state.shortList, function(shortItem) {
-      console.log("item: ", shortItem);
       si = (<ShortItem item={shortItem} deleteURL={_this.deleteURL} />)
       existingItems.push(si)
     });
@@ -122,9 +116,9 @@ var Shortener = React.createClass({
           </form>
         </div>
         <div className="panel panel-default">
-          <div className="panel-heading">Existing URLs</div>
+          <div className="table-list panel-heading">Existing URLs</div>
             <table className="table">
-              <thead><th>Slug</th><th>Long URL</th><th>Owner</th></thead>
+              <thead><th>Slug</th><th>Long URL</th><th>Owner</th><th></th></thead>
               <tbody>
                 {existingItems}
               </tbody>

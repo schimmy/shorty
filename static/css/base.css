@@ -14,7 +14,11 @@ input:required:valid  {
 }
 
 .panel {
-  box-shadow: 0 2px 6px 0 rgba(0, 0, 0, 0.2), 0 25px 50px 0 rgba(0, 0, 0, 0.15)
+  box-shadow: 0 2px 6px 0 rgba(0, 0, 0, 0.2), 0 25px 50px 0 rgba(0, 0, 0, 0.15);
+  max-width: 90%;
+  min-width: 850px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 #header {
@@ -42,20 +46,42 @@ input:required:valid  {
   font-size: 24px;
 }
 
+.panel-heading {
+  font-size: 18px;
+  font-weight: bold;
+}
+
 #shortener {
   min-width: 400px;
-  max-width: 900px;
-  width: 80%;
   margin: auto;
   padding: 10px;
 }
 
+/* List Section */
 table {
   margin-top: 10px;
 }
 
 td {
   border-right: 1px #777;
+  overflow: hidden;
+}
+
+.short-item button {
+  padding: 0 3px 0 3px;
+}
+.short-item a {
+  height: 27px;
+}
+
+.slug {
+  max-width: 150px;
+}
+.long-url {
+  max-width: 250px;
+}
+.owner {
+  max-width: 150px;
 }
 
 /* insert section */
@@ -63,6 +89,14 @@ input {
  display: block;
  float: left;
 }
+button {
+  margin-left: 10px;
+}
+
+.add-url {
+  margin: 0 0 10px 10px;
+}
+
 .add-item {
   margin-left: 5px;
   margin-right: 5px;
@@ -80,24 +114,8 @@ input {
   max-width: 150px;
 }
 
-button {
-  margin-left: 10px;
-}
-.add-url {
-  margin: 0 0 10px 10px;
-}
 .pre-text {
  display: block;
  float: left;
  padding: 9px 3px 0 3px;
-}
-.short-item button {
-  padding: 0 3px 0 3px;
-}
-.short-item a {
-  height: 27px;
-}
-.alert textarea {
-  display: block;
-  float: right;
 }

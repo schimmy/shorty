@@ -19,9 +19,8 @@ If you don't like what you see, you can also check out the other alternatives:
 After a few simple steps, I promise you will be up and running and won't need to touch it again.
 
 ### Pick a backend database.
-Current options are:
+Currently the only options is:
 - PostgreSQL (AWS Redshift also supported)
-- Redis
 
 *If you have a favorite backend you don't see here, please help me by creating a pull request!*
 I recommend a persistent storage - your users are not going to be happy if they lose these URLs!
@@ -30,7 +29,6 @@ I recommend a persistent storage - your users are not going to be happy if they 
 Find the script corresponding to your database and open it in a text editor. If there are TODOs, follow the instructions.
 You may modify this as you wish (for instance, perhaps you may want to use a different Postgres `schema` than '`shortener`'), however this means that you'll likely have to be more careful setting other environment variables later.
 - [PostgreSQL]()
-- Redis - does not require a creation script
 
 ### Run the database creation script
 
@@ -47,7 +45,7 @@ psql -p 5432 -U YOUR_ADMIN_USER -d YOUR_DATABASE -c "ALTER ROLE shortener WITH P
 ### Pick a deployment method
 
 #### Docker
-The latest published image at: [schimmy/pretty-self-hosted-url-shortener](dockerhub TODO). Run this Docker container with the relevant environment variables for your database.
+The latest published image at: [schimmy/easy-url-shortener](dockerhub TODO). Run this Docker container with the relevant environment variables for your database.
 
 #### Standalone Server (Windows, Linux)
 We also release binaries for Windows and Linux, available at [](TODO).
@@ -56,7 +54,7 @@ Likely you'll want to ensure that it restarts on reboot, etc, and I've included 
 
 Linux example:
 ```bash
-PG_HOST=my-postgres.colinschimmelfing.com PG_PASS=super_secret ./shortener
+PG_HOST=my-postgres.colinschimmelfing.com PG_PASS=super_secret ./easy-url-shortener
 ```
 
 ## That's it, you're done!

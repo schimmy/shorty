@@ -17,11 +17,10 @@ func main() {
 
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "8080"
+		port = "8040"
 	}
 
-	// TODO different backends based on config
-	//db := db.NewRedisDB()
+	// TODO: different backends based on config
 	db := db.NewPostgresDB()
 
 	r := mux.NewRouter()

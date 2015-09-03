@@ -6,30 +6,40 @@ import (
 	"log"
 	"time"
 
+	"gopkg.in/Clever/kayvee-go.v2"
+
+	// this is standard procedure for registering a drive with db/sql
 	_ "github.com/lib/pq"
 )
 
+const (
+	connStr = "host=%s port=%s user=%s password=%s dbname=%s sslmode=%s"
+)
+
+// PostgresDB represents a connection to a Postgres database.
 type PostgresDB struct {
 	c          *sql.DB
 	SchemaName string
 	TableName  string
 }
 
+// NewPostgresDB configures and connects to a postgres database.
 func NewPostgresDB() ShortenBackend {
-	pgHost := GetOrDefault("PG_HOST", "localhost")
-	pgPort := GetOrDefault("PG_PORT", "5432")
-	pgUser := GetOrDefault("PG_USER", "shortener")
-	pgPass := GetOrDefault("PG_PASSWORD", "NOPE")
-	pgDatabase := GetOrDefault("PG_DATABASE", "shortener")
-	pgSchema := GetOrDefault("PG_SCHEMA", "shortener")
-	pgTable := GetOrDefault("PG_TABLE", "shortener")
-	pgSSLMode := GetOrDefault("PG_SSL", "disable")
+	pgHost := getOrDefault("PG_HOST", "localhost")
+	pgPort := getOrDefault("PG_PORT", "5432")
+	pgUser := getOrDefault("PG_USER", "shortener")
+	pgPass := getOrDefault("PG_PASSWORD", "NOPE")
+	pgDatabase := getOrDefault("PG_DATABASE", "shortener")
+	pgSchema := getOrDefault("PG_SCHEMA", "shortener")
+	pgTable := getOrDefault("PG_TABLE", "shortener")
+	pgSSLMode := getOrDefault("PG_SSL", "disable")
 
-	connString := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s", pgHost, pgPort, pgUser, pgPass, pgDatabase, pgSSLMode)
+	connString := fmt.Sprintf(connStr, pgHost, pgPort, pgUser, pgPass, pgDatabase, pgSSLMode)
 	db, err := sql.Open("postgres", connString)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("Failed to connect to postgres: %s", err)
 	}
+
 	return &PostgresDB{
 		c:          db,
 		SchemaName: pgSchema,
@@ -37,74 +47,76 @@ func NewPostgresDB() ShortenBackend {
 	}
 }
 
+// DeleteURL removes a URL from the database.
 func (pgDB *PostgresDB) DeleteURL(slug string) error {
 	_, err := pgDB.c.Query(fmt.Sprintf("DELETE FROM %s.%s WHERE slug=$1", pgDB.SchemaName, pgDB.TableName), slug)
 	if err != nil {
 		return err
 	}
-	log.Printf("Successfully deleted slug: %s", slug)
+	log.Println(kayvee.FormatLog("shorty", kayvee.Info, "slug.delete", msg{
+		"name": slug,
+	}))
 	return nil
 
 }
+
+// ShortenURL creates a new record for a shortened URL.
 func (pgDB *PostgresDB) ShortenURL(slug, longURL, owner string, expires time.Time) error {
 	// postgres & redshift don't have an upsert method yet
 	existingLong, err := pgDB.GetLongURL(slug)
-	if existingLong == "" || err != nil { // TODO figure out what happens on nothing, err?
-		//q := fmt.Sprintf("INSERT INTO %s.%s(slug, long_url, expires, modified) VALUES($1, $2, $3, $4)")
+	if existingLong == "" || err != nil {
 		q := fmt.Sprintf("INSERT INTO %s.%s(slug, long_url, owner) VALUES($1, $2, $3)", pgDB.SchemaName, pgDB.TableName)
 		_, err := pgDB.c.Query(q, slug, longURL, owner)
 		if err != nil {
 			return fmt.Errorf("Issue inserting new row for slug: %s, err is: %s", slug, err)
 		}
+		log.Println(kayvee.FormatLog("shorty", kayvee.Info, "slug.new", msg{
+			"name":     slug,
+			"long_url": longURL,
+			"owner":    owner,
+		}))
 		return nil
 	}
+
 	// Otherwise, upsert
 	q := fmt.Sprintf("UPDATE %s.%s SET long_url=$2, owner=$3 WHERE slug=$1", pgDB.SchemaName, pgDB.TableName)
 	_, err = pgDB.c.Query(q, slug, longURL, owner)
 	if err != nil {
 		return err
 	}
-	log.Printf("Successfully updated slug: %s", slug)
+	log.Println(kayvee.FormatLog("shorty", kayvee.Info, "slug.update", msg{
+		"name":     slug,
+		"long_url": longURL,
+		"owner":    owner,
+	}))
 	return nil
 }
 
+// GetLongURL searches for the short URL reference in order to return the long url.
 func (pgDB *PostgresDB) GetLongURL(slug string) (string, error) {
-	//var retObj ShortenObject
 	q := fmt.Sprintf("SELECT long_url FROM %s.%s WHERE slug = $1", pgDB.SchemaName, pgDB.TableName)
-	var long_url string
-	err := pgDB.c.QueryRow(q, slug).Scan(&long_url)
+	var longURL string
+	err := pgDB.c.QueryRow(q, slug).Scan(&longURL)
 	if err != nil {
 		return "", err
 	}
-	log.Println("long: ", long_url)
-	return long_url, nil
-
+	return longURL, nil
 }
 
+// GetList lists all shortened URLs.
 func (pgDB *PostgresDB) GetList() ([]ShortenObject, error) {
 	rows, err := pgDB.c.Query(fmt.Sprintf("SELECT slug, long_url, owner FROM %s.%s", pgDB.SchemaName, pgDB.TableName))
 	if err != nil {
 		return nil, err
 	}
 	var retObjs []ShortenObject
-	var slug string
-	var long_url string
-	var owner string
-	//tags :=  []string{}
-	//var expires time.Time
-	//var modified time.Time
 	for rows.Next() {
-		err = rows.Scan(&slug, &long_url, &owner) //, &modified, &expires)
+		var so ShortenObject
+		err = rows.Scan(&so.Slug, &so.LongURL, &so.Owner)
 		if err != nil {
 			return nil, fmt.Errorf("issue scanning row for list: %s", err)
 		}
-		retObjs = append(retObjs, ShortenObject{
-			Slug:    slug,
-			LongURL: long_url,
-			Owner:   owner,
-			//Expires:  expires,
-			//Modified: modified,
-		})
+		retObjs = append(retObjs, so)
 	}
 	return retObjs, nil
 }

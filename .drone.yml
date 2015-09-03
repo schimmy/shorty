@@ -11,7 +11,7 @@ publish:
     email: $$docker_email
     username: $$docker_username
     password: $$docker_password
-    image_name: clever/easy-url-shortener
+    image_name: clever/shorty
     registry_login: true
     tags:
       - $(git rev-parse --short HEAD)

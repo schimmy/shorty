@@ -38,6 +38,7 @@ func getOrDefault(key, def string) string {
 	if val := os.Getenv(key); val != "" {
 		return val
 	}
+
 	log.Println(kayvee.FormatLog("shorty", kayvee.Info, "configuration", msg{
 		"msg": fmt.Sprintf("No value found for '%s', deafulting to '%s'", key, def),
 	}))

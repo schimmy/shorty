@@ -38,6 +38,6 @@ func main() {
 	r.PathPrefix("/").Handler(http.FileServer(http.Dir("./static")))
 	http.Handle("/", r)
 
-	fmt.Printf("Starting server on port: %s", port)
+	fmt.Printf("Starting server on port: %s\n", port)
 	log.Fatal(http.ListenAndServe(":"+port, nil))
 }

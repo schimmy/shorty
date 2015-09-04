@@ -32,7 +32,7 @@ type ShortenBackend interface {
 	// TODO: add tags / who added
 }
 
-// getOrDefault looks for values in the environment and defaults to thep provided value
+// getOrDefault looks for values in the environment and defaults to the provided value
 // if it is not found.
 func getOrDefault(key, def string) string {
 	if val := os.Getenv(key); val != "" {

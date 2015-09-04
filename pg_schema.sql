@@ -11,4 +11,4 @@ CREATE TABLE IF NOT EXISTS "shortener"."shortener" (
 );
 
 GRANT USAGE ON SCHEMA shortener TO shortener;
-GRANT UPDATE, INSERT, SELECT, REFERENCES ON shortener.shortener TO shortener;
+GRANT UPDATE, INSERT, SELECT, DELETE, REFERENCES ON shortener.shortener TO shortener;

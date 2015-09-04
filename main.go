@@ -7,9 +7,9 @@ import (
 	"os"
 	"runtime"
 
+	"github.com/Clever/shorty/db"
+	"github.com/Clever/shorty/routes"
 	"github.com/gorilla/mux"
-	"github.com/schimmy/easy-url-shortener/db"
-	"github.com/schimmy/easy-url-shortener/routes"
 )
 
 func main() {
@@ -30,6 +30,9 @@ func main() {
 	r.PathPrefix("/Shortener.jsx").Handler(http.FileServer(http.Dir("./static")))
 	r.PathPrefix("/favicon.png").Handler(http.FileServer(http.Dir("./static")))
 	r.HandleFunc("/{slug}", routes.RedirectHandler(db)).Methods("GET")
+	r.HandleFunc("/health/check", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, "STATUS OK")
+	})
 
 	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
@@ -38,6 +41,6 @@ func main() {
 	r.PathPrefix("/").Handler(http.FileServer(http.Dir("./static")))
 	http.Handle("/", r)
 
-	fmt.Println("Starting server on port", port)
+	fmt.Printf("Starting server on port: %s\n", port)
 	log.Fatal(http.ListenAndServe(":"+port, nil))
 }

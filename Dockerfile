@@ -1,8 +1,14 @@
-FROM google/debian:wheezy
+# shorty URL shortener service
+FROM golang:1.4
 
-ADD ./static /root/shortener/static
-COPY build/shortener /root/shortener/shortener
+ENV service "shorty"
+ENV dir "/go/src/github.com/Clever/$service"
 
-EXPOSE 80
-WORKDIR /root/shortener
-CMD ["/root/shortener/shortener"]
+RUN mkdir -p "$dir"
+ADD . "$dir"
+WORKDIR "$dir"
+
+RUN go get ./...
+RUN go build
+
+CMD ["./shorty"]

@@ -1,10 +1,10 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 	"runtime"
 
 	"github.com/Clever/shorty/db"
@@ -15,9 +15,9 @@ import (
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8040"
+	port := flag.String("port", "80", "port to listen for HTTP on")
+	if *port == "" {
+		*port = "8040"
 	}
 
 	// TODO: different backends based on config
@@ -41,6 +41,6 @@ func main() {
 	r.PathPrefix("/").Handler(http.FileServer(http.Dir("./static")))
 	http.Handle("/", r)
 
-	fmt.Printf("Starting server on port: %s\n", port)
-	log.Fatal(http.ListenAndServe(":"+port, nil))
+	fmt.Printf("Starting server on port: %s\n", *port)
+	log.Fatal(http.ListenAndServe(":"+*port, nil))
 }

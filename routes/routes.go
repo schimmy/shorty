@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/Clever/shorty/db"
 	"github.com/gorilla/mux"
+	"github.com/schimmy/shorty/db"
 	"gopkg.in/Clever/kayvee-go.v2"
 )
 

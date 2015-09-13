@@ -7,9 +7,9 @@ import (
 	"net/http"
 	"runtime"
 
-	"github.com/Clever/shorty/db"
-	"github.com/Clever/shorty/routes"
 	"github.com/gorilla/mux"
+	"github.com/schimmy/shorty/db"
+	"github.com/schimmy/shorty/routes"
 )
 
 const (

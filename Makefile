@@ -1,5 +1,5 @@
 SHELL := /bin/bash
-PKG := github.com/Clever/shorty
+PKG := github.com/schimmy/shorty
 PKGS := $(PKG)
 EXECUTABLE := shorty
 

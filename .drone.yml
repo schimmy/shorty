@@ -1,7 +1,4 @@
-image: bradrydzewski/go:1.3
-script:
-  - go get -u ./...
-  - make build
+image: bradrydzewski/go:1.4
 notify:
   email:
     recipients:
@@ -18,3 +15,15 @@ publish:
       - $(git rev-parse --short HEAD)
     when:
       branch: master
+services:
+  - postgres
+  - redis
+script:
+  - go get -u ./...
+  - sudo apt-get install -y postgresql-client
+  - createdb -h localhost -U postgres drone
+  - ls -alF
+  - pwd
+  - git log --stat
+  - bash integration_tests.sh
+  - make build

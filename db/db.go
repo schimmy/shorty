@@ -16,9 +16,9 @@ type msg map[string]interface{}
 // I like the NullTime concept from the pq library, so even for other backends
 // let's use it instead of checking whether the date is 0001-01-01
 type ShortenObject struct {
-	Slug     string    `json:"slug",sql:"slug"`
-	Owner    string    `json:"owner",sql:"owner"`
-	LongURL  string    `json:"long_url",sql:"long_url"`
+	Slug     string    `json:"slug"`
+	Owner    string    `json:"owner"`
+	LongURL  string    `json:"long_url"`
 	Modified time.Time `json:"modified_date,omitempty"`
 	Expires  time.Time `json:"expire_date,omitempty"`
 }

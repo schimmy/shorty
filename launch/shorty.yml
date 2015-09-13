@@ -5,6 +5,8 @@ env:
   - PG_PORT
   - PG_USERNAME
   - PG_PASSWORD
+  - PG_SCHEMA
+  - PG_TABLE
 resources:
   cpu: 0.2
 expose:

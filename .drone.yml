@@ -1,6 +1,4 @@
-image: bradrydzewski/go:1.3
-script:
-  - make build
+image: bradrydzewski/go:1.4
 notify:
   email:
     recipients:
@@ -11,9 +9,21 @@ publish:
     email: $$docker_email
     username: $$docker_username
     password: $$docker_password
-    image_name: clever/easy-url-shortener
+    image_name: clever/shorty
     registry_login: true
     tags:
       - $(git rev-parse --short HEAD)
     when:
       branch: master
+services:
+  - postgres
+  - redis
+script:
+  - go get -u ./...
+  - sudo apt-get install -y postgresql-client
+  - createdb -h localhost -U postgres drone
+  - ls -alF
+  - pwd
+  - git log --stat
+  - bash integration_tests.sh
+  - make build

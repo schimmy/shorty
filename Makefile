@@ -1,7 +1,7 @@
 SHELL := /bin/bash
-PKG := github.com/schimmy/easy-url-shortener
+PKG := github.com/Clever/shorty
 PKGS := $(PKG)
-EXECUTABLE := shortener
+EXECUTABLE := shorty
 
 .PHONY: test $(PKGS) build clean
 

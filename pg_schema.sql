@@ -1,6 +1,6 @@
 CREATE USER shortener WITH PASSWORD 'not-very-secret';
 
-CREATE SCHEMA IF NOT EXISTS shortener AUTHORIZATION shortener;
+CREATE SCHEMA shortener AUTHORIZATION shortener;
 
 CREATE TABLE IF NOT EXISTS "shortener"."shortener" (
   slug VARCHAR(255) PRIMARY KEY,

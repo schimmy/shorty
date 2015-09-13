@@ -22,13 +22,13 @@ type Redis struct {
 	p *redis.Pool
 }
 
-// NewRedisDB connects to Redis and pools connections.
+// NewRedsDB connects to Redis and pools connections.
 func NewRedisDB() ShortenBackend {
 	redisURL := getOrDefault("REDIS_URL", "localhost:6379")
 	pool := newPool(redisURL)
 	conn, err := pool.Dial()
 	if err != nil {
-		log.Fatalf("Failed to connect to redis @ '%s': %s", redisURL, err)
+		log.Fatalf("Failed to connect to redis at '%s': %s", redisURL, err)
 	}
 	conn.Close()
 

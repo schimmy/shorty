@@ -63,12 +63,14 @@ func (r Redis) ShortenURL(slug, longURL, owner string, expires time.Time) error 
 		return fmt.Errorf("Failed to save '%s': %s", slug, err)
 	}
 
-	// set the expire time
-	n, err := redis.Int(c.Do("PEXPIREAT", ns(slug), expires.Unix()))
-	if err != nil {
-		return fmt.Errorf("Failed to set expire time for '%s': %s", slug, err)
-	} else if n == 0 {
-		return fmt.Errorf("Failed to set expire time for '%s'", slug)
+	// set the expire time if it is a valid time
+	if !expires.Before(time.Now()) {
+		n, err := redis.Int(c.Do("PEXPIREAT", ns(slug), expires.Unix()))
+		if err != nil {
+			return fmt.Errorf("Failed to set expire time for '%s': %s", slug, err)
+		} else if n == 0 {
+			return fmt.Errorf("Failed to set expire time for '%s'", slug)
+		}
 	}
 
 	return nil
@@ -102,7 +104,7 @@ func (r Redis) GetList() ([]ShortenObject, error) {
 
 	// pipeline retrieving every
 	for _, key := range urlKeys {
-		c.Send("HGET", key, "slug", "owner", "long_url")
+		c.Send("HMGET", key, "slug", "owner", "long_url")
 	}
 
 	// flush all commands

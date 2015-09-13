@@ -2,7 +2,8 @@
 
 What, you need more information than the title?
 
-I looked around and found a bunch of toy examples of backend URL shorteners in Go, or PHP/MySQL solutions which seemed complicated and less-than-fully-featured. I wanted to make something that spins up with super-simple configuration and has a pluggable backend. Please contribute!
+I looked around and found a bunch of toy examples of backend URL shorteners in Go, or PHP/MySQL solutions which seemed complicated and less-than-fully-featured.
+I wanted to make something that spins up with super-simple configuration and has a pluggable backend. Please contribute!
 
 If you don't like what you see, you can also check out the other alternatives:
 - [YOURLS](yourls.org)

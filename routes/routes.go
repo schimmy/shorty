@@ -8,71 +8,90 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-	"github.com/schimmy/easy-url-shortener/db"
+	"github.com/schimmy/shorty/db"
+	"gopkg.in/Clever/kayvee-go.v2"
 )
 
-func returnJson(data interface{}, err error, w http.ResponseWriter, r *http.Request) {
-	retCode := 200
-	var content interface{}
+const (
+	errMsgTemplate = "<html>Unable to find long URL for slug: <em>'%s'</em>, please consult <a href='http://go/'>http://go</a> to add this slug.</html>"
+)
+
+var (
+	reserved = []string{"delete", "shorten", "list", "Shortener.jsx", "favicon.png"}
+)
+
+// msg is a convenience type for kayvee
+type msg map[string]interface{}
+
+// returnJSON
+func returnJSON(data interface{}, err error, w http.ResponseWriter, r *http.Request) {
 	if err != nil {
-		log.Printf("500 Err: %s", err)
-		data = map[string]interface{}{"error": err.Error()}
-		retCode = 500
+		log.Println(kayvee.FormatLog("shorty", kayvee.Error, "internal.error", msg{
+			"err": err.Error(),
+		}))
+		data = msg{"error": err.Error()}
+		w.WriteHeader(http.StatusInternalServerError)
 	}
-	content, err = json.Marshal(data)
-	if err != nil {
-		log.Fatalf("error marshalling json: %s", err.Error())
-	}
+
 	w.Header().Add("Content-Type", "application/json; charset=utf-8")
-	w.WriteHeader(retCode)
-	w.Write(content.([]byte))
+	err = json.NewEncoder(w).Encode(data)
+	if err != nil {
+		log.Println(kayvee.FormatLog("shorty", kayvee.Error, "json.encoding", msg{
+			"err": err.Error(),
+		}))
+	}
+
 	return
 }
 
+//ShortenHandler generates a HTTP handler for a shortening URL's given a datastore backend.
 func ShortenHandler(db db.ShortenBackend) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-
 		if err := r.ParseForm(); err != nil {
-			returnJson(nil, fmt.Errorf("couldn't parse form: %s", err.Error()), w, r)
+			returnJSON(nil, fmt.Errorf("couldn't parse form: %s", err.Error()), w, r)
 			return
 		}
 		slug := r.PostForm.Get("slug")
 		longURL := r.PostForm.Get("long_url")
 		owner := r.PostForm.Get("owner")
-		//tags := r.PostForm.Get("tags")
 
-		for _, reserved := range []string{"delete", "shorten", "list", "Shortener.jsx", "favicon.png"} {
+		for _, reserved := range reserved {
 			if slug == reserved {
-				returnJson(nil, fmt.Errorf("That slug is reserved: %s", slug), w, r)
+				returnJSON(nil, fmt.Errorf("That slug is reserved: %s", slug), w, r)
 				return
 			}
 		}
+
 		// for now set expiry to never
 		var t time.Time
 		err := db.ShortenURL(slug, longURL, owner, t)
-		returnJson(nil, err, w, r)
+		returnJSON(nil, err, w, r)
 		return
 	}
 }
 
+// DeleteHandler generates a HTTP handler for deleting URL's given a datastore backend.
 func DeleteHandler(db db.ShortenBackend) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if err := r.ParseForm(); err != nil {
-			returnJson(nil, fmt.Errorf("couldn't parse form: %s", err.Error()), w, r)
+			returnJSON(nil, fmt.Errorf("couldn't parse form: %s", err.Error()), w, r)
 			return
 		}
 		slug := r.PostForm.Get("slug")
 		err := db.DeleteURL(slug)
-		returnJson(nil, err, w, r)
-	}
-}
-func ListHandler(db db.ShortenBackend) func(http.ResponseWriter, *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		sObj, err := db.GetList()
-		returnJson(sObj, err, w, r)
+		returnJSON(nil, err, w, r)
 	}
 }
 
+// ListHandler generates a HTTP handler for listing URL's given a datastore backend.
+func ListHandler(db db.ShortenBackend) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		sObj, err := db.GetList()
+		returnJSON(sObj, err, w, r)
+	}
+}
+
+// RedirectHandler redirects users to their desired location.
 // Not accessed via Ajax, just by end users
 func RedirectHandler(db db.ShortenBackend) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -80,13 +99,13 @@ func RedirectHandler(db db.ShortenBackend) func(http.ResponseWriter, *http.Reque
 		long, err := db.GetLongURL(slug)
 		if long == "" {
 			w.WriteHeader(404)
-			w.Write([]byte(
-				fmt.Sprintf("<html>Unable to find long URL for slug: <em>'%s'</em>, please consult <a href='http://go/'>http://go</a> to add this slug.</html>",
-					slug)))
+			fmt.Fprintf(w, fmt.Sprintf(errMsgTemplate, slug))
 			return
 		}
 		if err != nil {
-			log.Printf("Error in redirect: %s", err)
+			log.Println(kayvee.FormatLog("shorty", kayvee.Error, "redirect", msg{
+				"err": err.Error(),
+			}))
 			w.WriteHeader(500)
 			w.Write([]byte(err.Error()))
 			return

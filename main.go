@@ -19,7 +19,7 @@ const (
 
 var (
 	port     = flag.String("port", "80", "port to listen on HTTP")
-	database = flag.String("db", pgBackend, "datastore option to use: ['postgres', 'redis']")
+	database = flag.String("db", pgBackend, "datastore option to use, one of: ['postgres', 'redis']")
 )
 
 func init() {

@@ -14,6 +14,7 @@ import (
 
 const (
 	errMsgTemplate  = "<html>Unable to find long URL for slug: <em>'%s'</em>, please consult <a href='http://%s/'>http://%s</a> or the proper admin instance to add this slug.</html>"
+	readOnlyMessage = "You have reached the read-only instance of this shortener. If you have access, please visit the admin instance to perform write operations."
 )
 
 var (
@@ -48,7 +49,18 @@ func returnJSON(data interface{}, err error, errNum int, w http.ResponseWriter) 
 	return
 }
 
-//ShortenHandler generates a HTTP handler for a shortening URL's given a datastore backend.
+// ReadOnlyHandler returns a message to the user saying that they need
+// to find the write-domain to modify things. This shouldn't be hit too
+// often as the admin interface itself will hide the user-facing input
+func ReadOnlyHandler() func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		log.Println("In read-only mode, returning 401")
+		returnJSON(nil, fmt.Errorf(readOnlyMessage), 401, w)
+		return
+	}
+}
+
+//ShortenHandler generates a HTTP handler for a shortening URLs given a datastore backend.
 func ShortenHandler(db db.ShortenBackend) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if err := r.ParseForm(); err != nil {

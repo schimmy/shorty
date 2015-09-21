@@ -18,8 +18,10 @@ const (
 )
 
 var (
-	port     = flag.String("port", "80", "port to listen on HTTP")
+	port     = flag.String("port", "80", "port to listen on")
 	database = flag.String("db", pgBackend, "datastore option to use, one of: ['postgres', 'redis']")
+	protocol = flag.String("protocol", "http", "protocol for the short handler - useful to separate for external-facing separate instance")
+	domain   = flag.String("domain", "go", "set the domain for the short URL reported to the user")
 )
 
 func init() {
@@ -42,9 +44,10 @@ func main() {
 	r.HandleFunc("/delete", routes.DeleteHandler(sdb)).Methods("POST")
 	r.HandleFunc("/shorten", routes.ShortenHandler(sdb)).Methods("POST")
 	r.HandleFunc("/list", routes.ListHandler(sdb)).Methods("GET")
+	r.HandleFunc("/meta", routes.MetaHandler(*protocol, *domain)).Methods("GET")
 	r.PathPrefix("/Shortener.jsx").Handler(http.FileServer(http.Dir("./static")))
 	r.PathPrefix("/favicon.png").Handler(http.FileServer(http.Dir("./static")))
-	r.HandleFunc("/{slug}", routes.RedirectHandler(sdb)).Methods("GET")
+	r.HandleFunc("/{slug}", routes.RedirectHandler(sdb, *domain)).Methods("GET")
 	r.HandleFunc("/health/check", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "STATUS OK")
 	})

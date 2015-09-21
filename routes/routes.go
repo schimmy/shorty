@@ -13,11 +13,11 @@ import (
 )
 
 const (
-	errMsgTemplate = "<html>Unable to find long URL for slug: <em>'%s'</em>, please consult <a href='http://go/'>http://go</a> to add this slug.</html>"
+	errMsgTemplate  = "<html>Unable to find long URL for slug: <em>'%s'</em>, please consult <a href='http://%s/'>http://%s</a> or the proper admin instance to add this slug.</html>"
 )
 
 var (
-	reserved = []string{"delete", "shorten", "list", "Shortener.jsx", "favicon.png"}
+	reserved = []string{"delete", "shorten", "list", "meta", "Shortener.jsx", "favicon.png"}
 )
 
 // msg is a convenience type for kayvee
@@ -87,6 +87,18 @@ func DeleteHandler(db db.ShortenBackend) func(http.ResponseWriter, *http.Request
 	}
 }
 
+// MetaHandler returns info on the protocol and the domain for our short URLs
+// Seems a little weird, but follows react patterns
+func MetaHandler(protocol, domain string) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		retObj := map[string]string{
+			"protocol": protocol,
+			"domain":   domain,
+		}
+		returnJSON(retObj, nil, 0, w)
+	}
+}
+
 // ListHandler generates a HTTP handler for listing URL's given a datastore backend.
 func ListHandler(db db.ShortenBackend) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -97,13 +109,13 @@ func ListHandler(db db.ShortenBackend) func(http.ResponseWriter, *http.Request) 
 
 // RedirectHandler redirects users to their desired location.
 // Not accessed via Ajax, just by end users
-func RedirectHandler(db db.ShortenBackend) func(http.ResponseWriter, *http.Request) {
+func RedirectHandler(db db.ShortenBackend, domain string) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		slug := mux.Vars(r)["slug"]
 		long, err := db.GetLongURL(slug)
 		if long == "" {
 			w.WriteHeader(404)
-			fmt.Fprintf(w, fmt.Sprintf(errMsgTemplate, slug))
+			fmt.Fprintf(w, fmt.Sprintf(errMsgTemplate, slug, domain, domain))
 			return
 		}
 		if err != nil {

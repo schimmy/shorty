@@ -24,22 +24,29 @@ var (
 // msg is a convenience type for kayvee
 type msg map[string]interface{}
 
-// returnJSON
-func returnJSON(data interface{}, err error, errNum int, w http.ResponseWriter) {
-	if err != nil {
+type httpError struct {
+	Err  string
+	Code int
+}
+
+func (h *httpError) Error() string {
+	return h.Err
+}
+
+// returnJSON takes in the data, an error that just consists of a message and a code,
+// and a response writer. If the error is not nil, we write the err code out and log
+// that there was an error, otherwise we JSON encode the data and return
+func returnJSON(data interface{}, inErr *httpError, w http.ResponseWriter) {
+	if inErr != nil {
 		log.Println(kayvee.FormatLog("shorty", kayvee.Error, "internal.error", msg{
-			"err": err.Error(),
+			"err": inErr.Error(),
 		}))
-		data = msg{"error": err.Error()}
-		// if errNum not set
-		if errNum == 0 {
-			errNum = http.StatusInternalServerError
-		}
-		w.WriteHeader(errNum)
+		data = msg{"error": inErr.Error()}
+		w.WriteHeader(inErr.Code)
 	}
 
 	w.Header().Add("Content-Type", "application/json; charset=utf-8")
-	err = json.NewEncoder(w).Encode(data)
+	err := json.NewEncoder(w).Encode(data)
 	if err != nil {
 		log.Println(kayvee.FormatLog("shorty", kayvee.Error, "json.encoding", msg{
 			"err": err.Error(),
@@ -55,7 +62,7 @@ func returnJSON(data interface{}, err error, errNum int, w http.ResponseWriter) 
 func ReadOnlyHandler() func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Println("In read-only mode, returning 401")
-		returnJSON(nil, fmt.Errorf(readOnlyMessage), 401, w)
+		returnJSON(nil, &httpError{readOnlyMessage, 401}, w)
 		return
 	}
 }
@@ -64,16 +71,16 @@ func ReadOnlyHandler() func(http.ResponseWriter, *http.Request) {
 func ShortenHandler(db db.ShortenBackend) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if err := r.ParseForm(); err != nil {
-			returnJSON(nil, fmt.Errorf("couldn't parse form: %s", err.Error()), 500, w)
+			returnJSON(nil, &httpError{fmt.Sprintf("couldn't parse form: %s", err.Error()), 500}, w)
 			return
 		}
 		slug := r.PostForm.Get("slug")
 		longURL := r.PostForm.Get("long_url")
 		owner := r.PostForm.Get("owner")
 
-		for _, reserved := range reserved {
-			if slug == reserved {
-				returnJSON(nil, fmt.Errorf("That slug is reserved: %s", slug), 400, w)
+		for _, res := range reserved {
+			if slug == res {
+				returnJSON(nil, &httpError{fmt.Sprintf("That slug is reserved: %s", slug), 400}, w)
 				return
 			}
 		}
@@ -81,7 +88,11 @@ func ShortenHandler(db db.ShortenBackend) func(http.ResponseWriter, *http.Reques
 		// for now set expiry to never
 		var t time.Time
 		err := db.ShortenURL(slug, longURL, owner, t)
-		returnJSON(nil, err, 0, w)
+		var hErr *httpError = nil
+		if err != nil {
+			hErr = &httpError{err.Error(), 500}
+		}
+		returnJSON(nil, hErr, w)
 		return
 	}
 }
@@ -90,12 +101,16 @@ func ShortenHandler(db db.ShortenBackend) func(http.ResponseWriter, *http.Reques
 func DeleteHandler(db db.ShortenBackend) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if err := r.ParseForm(); err != nil {
-			returnJSON(nil, fmt.Errorf("couldn't parse form: %s", err.Error()), 500, w)
+			returnJSON(nil, &httpError{fmt.Sprintf("couldn't parse form: %s", err.Error()), 500}, w)
 			return
 		}
 		slug := r.PostForm.Get("slug")
+		var hErr *httpError = nil
 		err := db.DeleteURL(slug)
-		returnJSON(nil, err, 0, w)
+		if err != nil {
+			hErr = &httpError{err.Error(), 500}
+		}
+		returnJSON(nil, hErr, w)
 	}
 }
 
@@ -107,15 +122,20 @@ func MetaHandler(protocol, domain string) func(http.ResponseWriter, *http.Reques
 			"protocol": protocol,
 			"domain":   domain,
 		}
-		returnJSON(retObj, nil, 0, w)
+		returnJSON(retObj, nil, w)
 	}
 }
 
 // ListHandler generates a HTTP handler for listing URL's given a datastore backend.
 func ListHandler(db db.ShortenBackend) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
+		var hErr *httpError = nil
 		sObj, err := db.GetList()
-		returnJSON(sObj, err, 0, w)
+		if err != nil {
+			hErr = &httpError{err.Error(), 500}
+		}
+
+		returnJSON(sObj, hErr, w)
 	}
 }
 

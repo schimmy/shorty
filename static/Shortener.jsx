@@ -81,7 +81,7 @@ var Shortener = React.createClass({
       dataType: "json",
       type: "GET",
       success: function(data) {
-        this.setState({flash: null, shortList: data});
+        this.setState({shortList: data});
       }.bind(this),
       error: function(xhr, status, err) {
         errMsg = "unknown";
@@ -101,7 +101,7 @@ var Shortener = React.createClass({
       dataType: "json",
       type: "GET",
       success: function(data) {
-        this.setState({protocol: data["protocol"], domain: data["domain"]});
+        this.setState({protocol: data["protocol"], domain: data["domain"], flash: null});
         // now get the actual list of URLs
         this.refreshList();
       }.bind(this),

@@ -96,3 +96,34 @@ func TestGetList(t *testing.T) {
 		assert.Equal(t, testData[u.Slug], u)
 	}
 }
+
+func TestOverwrite(t *testing.T) {
+	fillDB(t)
+	oldCat := testData["cat4"]
+
+	newCat := ShortenObject{
+		Slug:    oldCat.Slug,
+		Owner:   "yodie",
+		LongURL: "http://imgur.com/t/dogs/8IrIs", // todo find actua dog :-P
+	}
+	// this currently should overwrite the existing slug
+	err := datastore.ShortenURL(newCat.Slug, newCat.LongURL, newCat.Owner, time.Now())
+	assert.Nil(t, err, "Shorten to overwrite failed for slug:long '%s':%s, datastore type: %s, err: %s",
+		newCat.Slug, newCat.LongURL, datastoreType, err)
+
+	// ensure the old one is gone, new one exists
+	l, err := datastore.GetList()
+	assert.Nil(t, err, "getlist should not err out: %s", err)
+	for _, u := range l {
+		if u.Slug == newCat.Slug {
+			assert.Equal(t, newCat.LongURL, u.LongURL)
+			assert.False(t, newCat.LongURL == oldCat.LongURL, fmt.Sprintf("Old longURL persists for slug: %s", newCat.Slug))
+			assert.False(t, newCat.Owner == oldCat.Owner, fmt.Sprintf("Old Owner persists for slug: %s", newCat.Slug))
+		}
+	}
+
+	// Attempt to get long as well. Somewhat uneccessary, but a precaution against caching, etc
+	long, err := datastore.GetLongURL(newCat.Slug)
+	assert.Nil(t, err, "Failed to get record '%s' with '%s': %s", newCat.Slug, datastoreType, err)
+	assert.Equal(t, newCat.LongURL, long, "Record %s on %s", long, datastoreType)
+}

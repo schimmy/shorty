@@ -85,6 +85,16 @@ func ShortenHandler(db db.ShortenBackend) func(http.ResponseWriter, *http.Reques
 			}
 		}
 
+		if len(slug) == 0 {
+			returnJSON(nil, &httpError{"must provide a slug", 400}, w)
+			return
+		}
+
+		if len(longURL) == 0 {
+			returnJSON(nil, &httpError{"must provide a destination URL", 400}, w)
+			return
+		}
+
 		// for now set expiry to never
 		var t time.Time
 		err := db.ShortenURL(slug, longURL, owner, t)

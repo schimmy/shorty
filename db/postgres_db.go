@@ -98,6 +98,9 @@ func (pgDB *PostgresDB) GetLongURL(slug string) (string, error) {
 	var longURL string
 	err := pgDB.c.QueryRow(q, slug).Scan(&longURL)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return "", ErrNotFound{}
+		}
 		return "", err
 	}
 	return longURL, nil

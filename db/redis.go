@@ -43,8 +43,8 @@ func (r Redis) DeleteURL(slug string) error {
 	n, err := redis.Int(c.Do("DEL", ns(slug)))
 	if err != nil {
 		return fmt.Errorf("Failed to delete '%s': %s", slug, err)
-	} else if n != 1 {
-		return fmt.Errorf("Record not found")
+	} else if n < 1 {
+		return ErrNotFound{}
 	}
 
 	return nil
@@ -82,10 +82,12 @@ func (r Redis) GetLongURL(slug string) (string, error) {
 	defer c.Close()
 
 	longURL, err := redis.String(c.Do("HGET", ns(slug), "long_url"))
+
+	if longURL == "" || err == redis.ErrNil {
+		return "", ErrNotFound{}
+	}
 	if err != nil {
 		return "", fmt.Errorf("Failed to find long_url for '%s': %s", slug, err)
-	} else if longURL == "" {
-		return "", fmt.Errorf("Failed to find long_url for '%s'", slug)
 	}
 
 	return longURL, nil

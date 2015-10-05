@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-	"github.com/schimmy/shorty/db"
+	database "github.com/schimmy/shorty/db"
 	"gopkg.in/Clever/kayvee-go.v2"
 )
 
@@ -68,7 +68,7 @@ func ReadOnlyHandler() func(http.ResponseWriter, *http.Request) {
 }
 
 //ShortenHandler generates a HTTP handler for a shortening URLs given a datastore backend.
-func ShortenHandler(db db.ShortenBackend) func(http.ResponseWriter, *http.Request) {
+func ShortenHandler(db database.ShortenBackend) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if err := r.ParseForm(); err != nil {
 			returnJSON(nil, &httpError{fmt.Sprintf("couldn't parse form: %s", err.Error()), 500}, w)
@@ -108,7 +108,7 @@ func ShortenHandler(db db.ShortenBackend) func(http.ResponseWriter, *http.Reques
 }
 
 // DeleteHandler generates a HTTP handler for deleting URL's given a datastore backend.
-func DeleteHandler(db db.ShortenBackend) func(http.ResponseWriter, *http.Request) {
+func DeleteHandler(db database.ShortenBackend) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if err := r.ParseForm(); err != nil {
 			returnJSON(nil, &httpError{fmt.Sprintf("couldn't parse form: %s", err.Error()), 500}, w)
@@ -137,7 +137,7 @@ func MetaHandler(protocol, domain string) func(http.ResponseWriter, *http.Reques
 }
 
 // ListHandler generates a HTTP handler for listing URL's given a datastore backend.
-func ListHandler(db db.ShortenBackend) func(http.ResponseWriter, *http.Request) {
+func ListHandler(db database.ShortenBackend) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var hErr *httpError = nil
 		sObj, err := db.GetList()
@@ -151,11 +151,12 @@ func ListHandler(db db.ShortenBackend) func(http.ResponseWriter, *http.Request) 
 
 // RedirectHandler redirects users to their desired location.
 // Not accessed via Ajax, just by end users
-func RedirectHandler(db db.ShortenBackend, domain string) func(http.ResponseWriter, *http.Request) {
+func RedirectHandler(db database.ShortenBackend, domain string) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		slug := mux.Vars(r)["slug"]
 		long, err := db.GetLongURL(slug)
-		if long == "" {
+		var errNotFound database.ErrNotFound
+		if err == errNotFound {
 			w.WriteHeader(404)
 			fmt.Fprintf(w, fmt.Sprintf(errMsgTemplate, slug, domain, domain))
 			return

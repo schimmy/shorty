@@ -40,7 +40,7 @@ func (r Redis) DeleteURL(slug string) error {
 	c := r.p.Get()
 	defer c.Close()
 
-	n, err := redis.Int(c.Do("DEL", slug))
+	n, err := redis.Int(c.Do("DEL", ns(slug)))
 	if err != nil {
 		return fmt.Errorf("Failed to delete '%s': %s", slug, err)
 	} else if n != 1 {

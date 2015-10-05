@@ -127,3 +127,21 @@ func TestOverwrite(t *testing.T) {
 	assert.Nil(t, err, "Failed to get record '%s' with '%s': %s", newCat.Slug, datastoreType, err)
 	assert.Equal(t, newCat.LongURL, long, "Record %s on %s", long, datastoreType)
 }
+
+func TestDelete(t *testing.T) {
+	fillDB(t)
+	s := "cat4"
+	cat := testData[s]
+
+	long, err := datastore.GetLongURL(s)
+	assert.Nil(t, err, "Failed to get record '%s' with '%s': %s", s, datastoreType, err)
+	assert.Equal(t, cat.LongURL, long, "Record %s on %s", long, datastoreType)
+
+	err = datastore.DeleteURL(s)
+	assert.Nil(t, err, "Failed to delete '%s' with '%s': %s", s, datastoreType, err)
+
+	newLong, err := datastore.GetLongURL(s)
+	assert.Equal(t, ErrNotFound{}, err,
+		fmt.Sprintf("Record %s on %s should have returned not found, instead found: %s with err %s",
+			s, datastoreType, newLong, err))
+}

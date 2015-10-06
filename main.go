@@ -18,8 +18,11 @@ const (
 )
 
 var (
-	port     = flag.String("port", "80", "port to listen on HTTP")
-	database = flag.String("db", pgBackend, "datastore option to use: ['postgres', 'redis']")
+	port     = flag.String("port", "80", "port to listen on")
+	database = flag.String("db", pgBackend, "datastore option to use, one of: ['postgres', 'redis']")
+	readonly = flag.Bool("readonly", true, "set readonly mode (useful for external-facing instance)")
+	protocol = flag.String("protocol", "http", "protocol for the short handler - useful to separate for external-facing separate instance")
+	domain   = flag.String("domain", "go", "set the domain for the short URL reported to the user")
 )
 
 func init() {
@@ -38,13 +41,27 @@ func main() {
 		log.Fatalf("'%s' backend is not offered", *database)
 	}
 
+	// default to ReadOnly mode for POSTs and list of slugs
+	deleteHandler := routes.ReadOnlyHandler()
+	shortenHandler := routes.ReadOnlyHandler()
+	listHandler := routes.ReadOnlyHandler()
+	if *readonly == false {
+		deleteHandler = routes.DeleteHandler(sdb)
+		shortenHandler = routes.ShortenHandler(sdb)
+		listHandler = routes.ListHandler(sdb)
+	}
 	r := mux.NewRouter()
-	r.HandleFunc("/delete", routes.DeleteHandler(sdb)).Methods("POST")
-	r.HandleFunc("/shorten", routes.ShortenHandler(sdb)).Methods("POST")
-	r.HandleFunc("/list", routes.ListHandler(sdb)).Methods("GET")
+	r.HandleFunc("/delete", deleteHandler).Methods("POST")
+	r.HandleFunc("/shorten", shortenHandler).Methods("POST")
+	r.HandleFunc("/list", listHandler).Methods("GET")
+
+	// Safe for public consumption no matter what below here
+	// Technically someone could scrape the whole slug space to discover
+	// all the slugs, but that comes along with the territory
+	r.HandleFunc("/meta", routes.MetaHandler(*protocol, *domain)).Methods("GET")
 	r.PathPrefix("/Shortener.jsx").Handler(http.FileServer(http.Dir("./static")))
 	r.PathPrefix("/favicon.png").Handler(http.FileServer(http.Dir("./static")))
-	r.HandleFunc("/{slug}", routes.RedirectHandler(sdb)).Methods("GET")
+	r.HandleFunc("/{slug}", routes.RedirectHandler(sdb, *domain)).Methods("GET")
 	r.HandleFunc("/health/check", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "STATUS OK")
 	})

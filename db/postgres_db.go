@@ -62,7 +62,7 @@ func (pgDB *PostgresDB) DeleteURL(slug string) error {
 
 // ShortenURL creates a new record for a shortened URL.
 func (pgDB *PostgresDB) ShortenURL(slug, longURL, owner string, expires time.Time) error {
-	// postgres & redshift don't have an upsert method yet
+	// postgres doesn't have an upsert method yet (coming in 9.5)
 	existingLong, err := pgDB.GetLongURL(slug)
 	if existingLong == "" || err != nil {
 		q := fmt.Sprintf("INSERT INTO %s.%s(slug, long_url, owner) VALUES($1, $2, $3)", pgDB.SchemaName, pgDB.TableName)
@@ -98,6 +98,9 @@ func (pgDB *PostgresDB) GetLongURL(slug string) (string, error) {
 	var longURL string
 	err := pgDB.c.QueryRow(q, slug).Scan(&longURL)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return "", ErrNotFound{}
+		}
 		return "", err
 	}
 	return longURL, nil

@@ -15,4 +15,4 @@ expose:
     bind: 80
     health_check:
       type: http
-      path: /
+      path: /health/check

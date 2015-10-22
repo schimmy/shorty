@@ -1,5 +1,10 @@
 run:
   type: docker
+elbs:
+  staging:
+    - shorty-staging
+  production:
+    - shorty
 env:
   - PG_HOST
   - PG_PORT

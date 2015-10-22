@@ -2,7 +2,7 @@
 FROM golang:1.4
 
 ENV service "shorty"
-ENV dir "/go/src/github.com/Clever/$service"
+ENV dir "/go/src/github.com/schimmy/$service"
 
 RUN mkdir -p "$dir"
 ADD . "$dir"

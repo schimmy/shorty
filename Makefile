@@ -1,6 +1,6 @@
 SHELL := /bin/bash
-PKG := github.com/Clever/shorty
-PKGS := $(PKG)
+PKG := github.com/schimmy/shorty
+PKGS := $(PKG) $(PKG)/db
 EXECUTABLE := shorty
 
 .PHONY: test $(PKGS) build clean

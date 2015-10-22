@@ -7,34 +7,46 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/Clever/shorty/db"
 	"github.com/gorilla/mux"
+	database "github.com/schimmy/shorty/db"
 	"gopkg.in/Clever/kayvee-go.v2"
 )
 
 const (
-	errMsgTemplate = "<html>Unable to find long URL for slug: <em>'%s'</em>, please consult <a href='http://go/'>http://go</a> to add this slug.</html>"
+	errMsgTemplate  = "<html>Unable to find long URL for slug: <em>'%s'</em>, please consult <a href='http://%s/'>http://%s</a> or the proper admin instance to add this slug.</html>"
+	readOnlyMessage = "You have reached the read-only instance of this shortener. If you have access, please visit the admin instance to perform write operations."
 )
 
 var (
-	reserved = []string{"delete", "shorten", "list", "Shortener.jsx", "favicon.png"}
+	reserved = []string{"delete", "shorten", "list", "meta", "Shortener.jsx", "favicon.png"}
 )
 
 // msg is a convenience type for kayvee
 type msg map[string]interface{}
 
-// returnJSON
-func returnJSON(data interface{}, err error, w http.ResponseWriter, r *http.Request) {
-	if err != nil {
+type httpError struct {
+	Err  string
+	Code int
+}
+
+func (h *httpError) Error() string {
+	return h.Err
+}
+
+// returnJSON takes in the data, an error that just consists of a message and a code,
+// and a response writer. If the error is not nil, we write the err code out and log
+// that there was an error, otherwise we JSON encode the data and return
+func returnJSON(data interface{}, inErr *httpError, w http.ResponseWriter) {
+	if inErr != nil {
 		log.Println(kayvee.FormatLog("shorty", kayvee.Error, "internal.error", msg{
-			"err": err.Error(),
+			"err": inErr.Error(),
 		}))
-		data = msg{"error": err.Error()}
-		w.WriteHeader(http.StatusInternalServerError)
+		data = msg{"error": inErr.Error()}
+		w.WriteHeader(inErr.Code)
 	}
 
 	w.Header().Add("Content-Type", "application/json; charset=utf-8")
-	err = json.NewEncoder(w).Encode(data)
+	err := json.NewEncoder(w).Encode(data)
 	if err != nil {
 		log.Println(kayvee.FormatLog("shorty", kayvee.Error, "json.encoding", msg{
 			"err": err.Error(),
@@ -44,62 +56,109 @@ func returnJSON(data interface{}, err error, w http.ResponseWriter, r *http.Requ
 	return
 }
 
-//ShortenHandler generates a HTTP handler for a shortening URL's given a datastore backend.
-func ShortenHandler(db db.ShortenBackend) func(http.ResponseWriter, *http.Request) {
+// ReadOnlyHandler returns a message to the user saying that they need
+// to find the write-domain to modify things. This shouldn't be hit too
+// often as the admin interface itself will hide the user-facing input
+func ReadOnlyHandler() func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		log.Println("In read-only mode, returning 401")
+		returnJSON(nil, &httpError{readOnlyMessage, 401}, w)
+		return
+	}
+}
+
+//ShortenHandler generates a HTTP handler for a shortening URLs given a datastore backend.
+func ShortenHandler(db database.ShortenBackend) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if err := r.ParseForm(); err != nil {
-			returnJSON(nil, fmt.Errorf("couldn't parse form: %s", err.Error()), w, r)
+			returnJSON(nil, &httpError{fmt.Sprintf("couldn't parse form: %s", err.Error()), 500}, w)
 			return
 		}
 		slug := r.PostForm.Get("slug")
 		longURL := r.PostForm.Get("long_url")
 		owner := r.PostForm.Get("owner")
 
-		for _, reserved := range reserved {
-			if slug == reserved {
-				returnJSON(nil, fmt.Errorf("That slug is reserved: %s", slug), w, r)
+		for _, res := range reserved {
+			if slug == res {
+				returnJSON(nil, &httpError{fmt.Sprintf("That slug is reserved: %s", slug), 400}, w)
 				return
 			}
+		}
+
+		if len(slug) == 0 {
+			returnJSON(nil, &httpError{"must provide a slug", 400}, w)
+			return
+		}
+
+		if len(longURL) == 0 {
+			returnJSON(nil, &httpError{"must provide a destination URL", 400}, w)
+			return
 		}
 
 		// for now set expiry to never
 		var t time.Time
 		err := db.ShortenURL(slug, longURL, owner, t)
-		returnJSON(nil, err, w, r)
+		var hErr *httpError = nil
+		if err != nil {
+			hErr = &httpError{err.Error(), 500}
+		}
+		returnJSON(nil, hErr, w)
 		return
 	}
 }
 
 // DeleteHandler generates a HTTP handler for deleting URL's given a datastore backend.
-func DeleteHandler(db db.ShortenBackend) func(http.ResponseWriter, *http.Request) {
+func DeleteHandler(db database.ShortenBackend) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if err := r.ParseForm(); err != nil {
-			returnJSON(nil, fmt.Errorf("couldn't parse form: %s", err.Error()), w, r)
+			returnJSON(nil, &httpError{fmt.Sprintf("couldn't parse form: %s", err.Error()), 500}, w)
 			return
 		}
 		slug := r.PostForm.Get("slug")
+		var hErr *httpError = nil
 		err := db.DeleteURL(slug)
-		returnJSON(nil, err, w, r)
+		if err != nil {
+			hErr = &httpError{err.Error(), 500}
+		}
+		returnJSON(nil, hErr, w)
+	}
+}
+
+// MetaHandler returns info on the protocol and the domain for our short URLs
+// Seems a little weird, but follows react patterns
+func MetaHandler(protocol, domain string) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		retObj := map[string]string{
+			"protocol": protocol,
+			"domain":   domain,
+		}
+		returnJSON(retObj, nil, w)
 	}
 }
 
 // ListHandler generates a HTTP handler for listing URL's given a datastore backend.
-func ListHandler(db db.ShortenBackend) func(http.ResponseWriter, *http.Request) {
+func ListHandler(db database.ShortenBackend) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
+		var hErr *httpError = nil
 		sObj, err := db.GetList()
-		returnJSON(sObj, err, w, r)
+		if err != nil {
+			hErr = &httpError{err.Error(), 500}
+		}
+
+		returnJSON(sObj, hErr, w)
 	}
 }
 
 // RedirectHandler redirects users to their desired location.
 // Not accessed via Ajax, just by end users
-func RedirectHandler(db db.ShortenBackend) func(http.ResponseWriter, *http.Request) {
+func RedirectHandler(db database.ShortenBackend, domain string) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		slug := mux.Vars(r)["slug"]
 		long, err := db.GetLongURL(slug)
-		if long == "" {
+		var errNotFound database.ErrNotFound
+		if err == errNotFound {
 			w.WriteHeader(404)
-			fmt.Fprintf(w, fmt.Sprintf(errMsgTemplate, slug))
+			fmt.Fprintf(w, fmt.Sprintf(errMsgTemplate, slug, domain, domain))
 			return
 		}
 		if err != nil {

@@ -12,6 +12,12 @@ import (
 // msg is a convenience type for kayvee
 type msg map[string]interface{}
 
+type ErrNotFound struct{}
+
+func (e ErrNotFound) Error() string {
+	return "No items found by the db layer"
+}
+
 // ShortenObject holds the metadata and the mapping for a shortened URL
 // I like the NullTime concept from the pq library, so even for other backends
 // let's use it instead of checking whether the date is 0001-01-01

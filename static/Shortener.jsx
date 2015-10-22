@@ -12,10 +12,10 @@ var ShortItem = React.createClass({
   render: function() {
     i = this.props.item
     //expire = i.expire_date ? moment(i.expire_date).format("YYYY/M/D") : ""
-    shortURL = "http://go/" + i.slug
+    shortURL = this.props.protocol + "://" + this.props.domain + "/" + i.slug
     return (
       <tr className="short-item">
-        <td className="slug"><a href={shortURL}>go/{i.slug}</a></td>
+        <td className="slug"><a href={shortURL}>{this.props.domain}/{i.slug}</a></td>
         <td className="long-url"><a href={i.long_url}>{i.long_url}</a></td>
         <td className="owner">{i.owner}</td>
         <td className="delete"><Button onClick={this.deleteURL} className="glyphicon glyphicon-remove"></Button></td>
@@ -27,6 +27,8 @@ var ShortItem = React.createClass({
 // Overall control class
 var Shortener = React.createClass({
   shortList: [],
+  protocol: "http",
+  domain: "go",
 
   shortenURL: function(e) {
     e.preventDefault()
@@ -42,7 +44,7 @@ var Shortener = React.createClass({
       },
       type: "POST",
       success: function() {
-        newLink = "http://go/"+ slug;
+        newLink = this.state.protocol + "://" + "/" + slug;
         this.refreshList();
         flash = <Alert bsStyle="success">Successfully linked URL: <a href={newLink}>{newLink}</a></Alert>
         this.setState({currentOwner: owner, flash: flash});
@@ -63,12 +65,12 @@ var Shortener = React.createClass({
       success: function(data) {
         flash = <Alert bsStyle="success">Successfully deleted slug: <em>{slug}</em> pointing to URL: <em>{longURL}</em></Alert>
         console.log("successful post, flash: " , flash);
-        this.setState({currentOwner: this.state.currentOwner, flash: flash});
+        this.setState({flash: flash});
         this.refreshList();
       }.bind(this),
       error: function(xhr, status, err) {
         console.error("error deleting URL", xhr.responseJSON);
-        this.setState({currentOwner: this.state.currentOwner, flash: <Alert bsStyle="danger">{xhr.responseJSON.error}</Alert>});
+        this.setState({flash: <Alert bsStyle="danger">{xhr.responseJSON.error}</Alert>});
       }.bind(this)
     });
   },
@@ -79,25 +81,43 @@ var Shortener = React.createClass({
       dataType: "json",
       type: "GET",
       success: function(data) {
-        this.setState({currentOwner: this.state.currentOwner, flash: this.state.flash, shortList: data});
+        this.setState({shortList: data});
       }.bind(this),
       error: function(xhr, status, err) {
-        console.error("error getting list", xhr.responseJSON);
-        this.setState({currentOwner: this.state.currentOwner, flash: <Alert bsStyle="danger">Error loading data: {xhr.responseJSON.error}</Alert>});
+        errMsg = "unknown";
+        if (xhr.responseJSON !== undefined) {
+          errMsg = xhr.responseJSON.error;
+        }
+        console.error("error getting list: ", errMsg);
+        this.setState({flash: <Alert bsStyle="danger">Error loading data: {errMsg}</Alert>});
       }.bind(this)
     });
   },
 
+
   getInitialState: function() {
-    this.refreshList();
-    return {shortList: [], currentOwner: "None"};
+    $.ajax({
+      url: "/meta",
+      dataType: "json",
+      type: "GET",
+      success: function(data) {
+        this.setState({protocol: data["protocol"], domain: data["domain"], flash: null});
+        // now get the actual list of URLs
+        this.refreshList();
+      }.bind(this),
+      error: function(xhr, status, err) {
+        console.error("error getting metadata like protocol and domain", xhr.responseJSON);
+        this.setState({currentOwner: this.state.currentOwner, flash: <Alert bsStyle="danger">Error loading metadata: {xhr.responseJSON.error}</Alert>});
+      }.bind(this)
+    });
+    return {shortList: [], currentOwner: "None", flash: <Alert bsStyle="info">Loading...</Alert>}
   },
 
   render: function() {
     existingItems = [];
     _this = this
     _.each(this.state.shortList, function(shortItem) {
-      si = (<ShortItem item={shortItem} deleteURL={_this.deleteURL} />)
+      si = (<ShortItem item={shortItem} deleteURL={_this.deleteURL} protocol={_this.state.protocol} domain={_this.state.domain}/>)
       existingItems.push(si)
     });
     return (
@@ -106,7 +126,7 @@ var Shortener = React.createClass({
         <div className="panel panel-default">
           <div className="panel-heading">Add or Modify a URL</div>
           <form className="add-url" >
-            <div className="pre-text">go/</div>
+            <div className="pre-text">{this.state.domain + "/"}</div>
             <Input ref="slugToAdd" className="slug-to-add add-item" type="text" defaultValue="short" required></Input>
             <div className="pre-text">→</div>
             <Input ref="longURLToAdd" className="long-url-to-add add-item" pattern="http.*" type="text" defaultValue="http://example.com/lonnnnnnnnnnnng" required></Input>

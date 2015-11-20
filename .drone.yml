@@ -7,8 +7,6 @@ publish:
   catapult:
     url: $$catapult_url
     application: "shorty"
-    when:
-      branch: master
   docker:
     docker_host: $$docker_server
     email: $$docker_email

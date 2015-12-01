@@ -1,5 +1,6 @@
 SHELL := /bin/bash
-PKG := github.com/Clever/shorty
+PKG := $(shell go list)
+EXECUTABLE := $(basename $(PKG))
 PKGS := $(shell go list ./... | grep -v /vendor)
 READMES := $(foreach pkg,$(PKGS),$(pkg)/README.md)
 

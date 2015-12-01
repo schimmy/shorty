@@ -9,8 +9,7 @@ export PG_DATABASE=drone
 
 psql -U $PG_USER -d $PG_DATABASE -h "$PG_HOST" < ./pg_schema.sql
 
-
-go test -v ./...
+make test
 
 # kill all child processes to clean up - pkill always returns nonzero
 pkill -P $$ || echo "test complete"

@@ -169,7 +169,7 @@ func RedirectHandler(db database.ShortenBackend, domain string) func(http.Respon
 			w.Write([]byte(err.Error()))
 			return
 		}
-		http.Redirect(w, r, long, 301)
+		http.Redirect(w, r, long, 302)
 		return
 	}
 }

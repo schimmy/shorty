@@ -1,7 +1,7 @@
 SHELL := /bin/bash
 PKG := github.com/Clever/shorty
 PKGS := $(shell go list ./... | grep -v /vendor)
-READMES := $(foreach pkg,$(SUBPKGS),$(pkg)/README.md)
+READMES := $(foreach pkg,$(PKGS),$(pkg)/README.md)
 
 GOVERSION := $(shell go version | grep 1.5)
 ifeq "$(GOVERSION)" ""

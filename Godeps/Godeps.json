@@ -1,0 +1,41 @@
+{
+	"ImportPath": "github.com/Clever/shorty",
+	"GoVersion": "go1.5.1",
+	"Packages": [
+		"github.com/Clever/shorty",
+		"github.com/Clever/shorty/db",
+		"github.com/Clever/shorty/routes"
+	],
+	"Deps": [
+		{
+			"ImportPath": "github.com/garyburd/redigo/internal",
+			"Rev": "9d4db5d1dbeff473d50e1bb82f5405c8cca0f0ac"
+		},
+		{
+			"ImportPath": "github.com/garyburd/redigo/redis",
+			"Rev": "9d4db5d1dbeff473d50e1bb82f5405c8cca0f0ac"
+		},
+		{
+			"ImportPath": "github.com/gorilla/context",
+			"Rev": "215affda49addc4c8ef7e2534915df2c8c35c6cd"
+		},
+		{
+			"ImportPath": "github.com/gorilla/mux",
+			"Rev": "94903de8c98a68d8b4483c529b26a5d146e386a2"
+		},
+		{
+			"ImportPath": "github.com/lib/pq",
+			"Comment": "go1.0-cutoff-13-g19eeca3",
+			"Rev": "19eeca3e30d2577b1761db471ec130810e67f532"
+		},
+		{
+			"ImportPath": "github.com/stretchr/testify/assert",
+			"Rev": "efa3c4c36479edac5af79cbcb4bc8cb525e09b13"
+		},
+		{
+			"ImportPath": "gopkg.in/Clever/kayvee-go.v2",
+			"Comment": "v2.0.0",
+			"Rev": "6027372b81c7ac2294c5e4419ece8e04f0b740f1"
+		}
+	]
+}

@@ -1,22 +1,22 @@
 package db
 
 import (
+	"errors"
 	"fmt"
-	"log"
 	"os"
 	"time"
 
-	"gopkg.in/Clever/kayvee-go.v2"
+	"gopkg.in/Clever/kayvee-go.v2/logger"
+)
+
+var (
+	// ErrNotFound represents the case when a long URL is no found
+	ErrNotFound = errors.New("No items found by the db layer")
+	lg          = logger.New("shorty")
 )
 
 // msg is a convenience type for kayvee
 type msg map[string]interface{}
-
-type ErrNotFound struct{}
-
-func (e ErrNotFound) Error() string {
-	return "No items found by the db layer"
-}
 
 // ShortenObject holds the metadata and the mapping for a shortened URL
 // I like the NullTime concept from the pq library, so even for other backends
@@ -45,8 +45,7 @@ func getOrDefault(key, def string) string {
 		return val
 	}
 
-	log.Println(kayvee.FormatLog("shorty", kayvee.Info, "configuration", msg{
-		"msg": fmt.Sprintf("No value found for '%s', defaulting to '%s'", key, def),
-	}))
+	lg.InfoD("configuration", msg{
+		"msg": fmt.Sprintf("No value found for '%s', defaulting to '%s'", key, def)})
 	return def
 }

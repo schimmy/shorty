@@ -2,7 +2,7 @@ package db
 
 import (
 	"fmt"
-	"log"
+	"os"
 	"time"
 
 	"github.com/garyburd/redigo/redis"
@@ -22,16 +22,17 @@ type Redis struct {
 	p *redis.Pool
 }
 
-// NewRedsDB connects to Redis and pools connections.
+// NewRedisDB connects to Redis and pools connections.
 func NewRedisDB() ShortenBackend {
 	redisURL := getOrDefault("REDIS_URL", "localhost:6379")
 	pool := newPool(redisURL)
 	conn, err := pool.Dial()
 	if err != nil {
-		log.Fatalf("Failed to connect to redis at '%s': %s", redisURL, err)
+		lg.ErrorD("redis.connection.failure", msg{
+			"msg": fmt.Sprintf("Failed to connect to redis at '%s': %s", redisURL, err)})
+		os.Exit(1)
 	}
 	conn.Close()
-
 	return Redis{p: pool}
 }
 
@@ -44,9 +45,11 @@ func (r Redis) DeleteURL(slug string) error {
 	if err != nil {
 		return fmt.Errorf("Failed to delete '%s': %s", slug, err)
 	} else if n < 1 {
-		return ErrNotFound{}
+		return ErrNotFound
 	}
 
+	lg.InfoD("slug.delete", msg{
+		"name": slug})
 	return nil
 }
 
@@ -84,9 +87,8 @@ func (r Redis) GetLongURL(slug string) (string, error) {
 	longURL, err := redis.String(c.Do("HGET", ns(slug), "long_url"))
 
 	if longURL == "" || err == redis.ErrNil {
-		return "", ErrNotFound{}
-	}
-	if err != nil {
+		return "", ErrNotFound
+	} else if err != nil {
 		return "", fmt.Errorf("Failed to find long_url for '%s': %s", slug, err)
 	}
 

@@ -9,7 +9,7 @@ import (
 
 	database "github.com/Clever/shorty/db"
 	"github.com/gorilla/mux"
-	"gopkg.in/Clever/kayvee-go.v2"
+	"gopkg.in/Clever/kayvee-go.v2/logger"
 )
 
 const (
@@ -19,6 +19,7 @@ const (
 
 var (
 	reserved = []string{"delete", "shorten", "list", "meta", "Shortener.jsx", "favicon.png"}
+	lg       = logger.New("shorty")
 )
 
 // msg is a convenience type for kayvee
@@ -38,19 +39,18 @@ func (h *httpError) Error() string {
 // that there was an error, otherwise we JSON encode the data and return
 func returnJSON(data interface{}, inErr *httpError, w http.ResponseWriter) {
 	if inErr != nil {
-		log.Println(kayvee.FormatLog("shorty", kayvee.Error, "internal.error", msg{
-			"err": inErr.Error(),
-		}))
+		lg.ErrorD("internal.error", msg{
+			"msg": inErr.Error()})
 		data = msg{"error": inErr.Error()}
 		w.WriteHeader(inErr.Code)
+		return
 	}
 
 	w.Header().Add("Content-Type", "application/json; charset=utf-8")
 	err := json.NewEncoder(w).Encode(data)
 	if err != nil {
-		log.Println(kayvee.FormatLog("shorty", kayvee.Error, "json.encoding", msg{
-			"err": err.Error(),
-		}))
+		lg.ErrorD("json.encoding", msg{
+			"msg": err.Error()})
 	}
 
 	return
@@ -155,16 +155,14 @@ func RedirectHandler(db database.ShortenBackend, domain string) func(http.Respon
 	return func(w http.ResponseWriter, r *http.Request) {
 		slug := mux.Vars(r)["slug"]
 		long, err := db.GetLongURL(slug)
-		var errNotFound database.ErrNotFound
-		if err == errNotFound {
+		if err == database.ErrNotFound {
 			w.WriteHeader(404)
 			fmt.Fprintf(w, fmt.Sprintf(errMsgTemplate, slug, domain, domain))
 			return
 		}
 		if err != nil {
-			log.Println(kayvee.FormatLog("shorty", kayvee.Error, "redirect", msg{
-				"err": err.Error(),
-			}))
+			lg.ErrorD("redirect.error", msg{
+				"msg": err.Error()})
 			w.WriteHeader(500)
 			w.Write([]byte(err.Error()))
 			return

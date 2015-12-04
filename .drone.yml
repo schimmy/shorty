@@ -23,6 +23,5 @@ services:
 - redis
 script:
 - sudo apt-get install -y postgresql-client
-- createdb -h localhost -U postgres shortener
 - bash integration_tests.sh
 - make build

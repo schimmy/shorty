@@ -32,7 +32,7 @@ $(PKGS): $(GOLINT)
 	@go test -v $@
 	@echo ""
 
-build: $(PKGS)
+build:
 	go build -o bin/$(EXECUTABLE) $(PKG)
 
 clean:

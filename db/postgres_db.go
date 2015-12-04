@@ -3,10 +3,8 @@ package db
 import (
 	"database/sql"
 	"fmt"
-	"log"
+	"os"
 	"time"
-
-	"gopkg.in/Clever/kayvee-go.v2"
 
 	// this is standard procedure for registering a drive with db/sql
 	_ "github.com/lib/pq"
@@ -37,7 +35,9 @@ func NewPostgresDB() ShortenBackend {
 	connString := fmt.Sprintf(connStr, pgHost, pgPort, pgUser, pgPass, pgDatabase, pgSSLMode)
 	db, err := sql.Open("postgres", connString)
 	if err != nil {
-		log.Fatalf("Failed to connect to postgres: %s", err)
+		lg.ErrorD("postgres-failed-connection", msg{
+			"msg": fmt.Sprintf("Failed to connect to postgres: %s", err)})
+		os.Exit(1)
 	}
 
 	return &PostgresDB{
@@ -53,9 +53,8 @@ func (pgDB *PostgresDB) DeleteURL(slug string) error {
 	if err != nil {
 		return err
 	}
-	log.Println(kayvee.FormatLog("shorty", kayvee.Info, "slug.delete", msg{
-		"name": slug,
-	}))
+	lg.InfoD("slug.delete", msg{
+		"name": slug})
 	return nil
 
 }
@@ -70,11 +69,10 @@ func (pgDB *PostgresDB) ShortenURL(slug, longURL, owner string, expires time.Tim
 		if err != nil {
 			return fmt.Errorf("Issue inserting new row for slug: %s, err is: %s", slug, err)
 		}
-		log.Println(kayvee.FormatLog("shorty", kayvee.Info, "slug.new", msg{
+		lg.InfoD("slug.new", msg{
 			"name":     slug,
 			"long_url": longURL,
-			"owner":    owner,
-		}))
+			"owner":    owner})
 		return nil
 	}
 
@@ -84,11 +82,10 @@ func (pgDB *PostgresDB) ShortenURL(slug, longURL, owner string, expires time.Tim
 	if err != nil {
 		return err
 	}
-	log.Println(kayvee.FormatLog("shorty", kayvee.Info, "slug.update", msg{
+	lg.InfoD("slug.update", msg{
 		"name":     slug,
 		"long_url": longURL,
-		"owner":    owner,
-	}))
+		"owner":    owner})
 	return nil
 }
 
@@ -99,7 +96,7 @@ func (pgDB *PostgresDB) GetLongURL(slug string) (string, error) {
 	err := pgDB.c.QueryRow(q, slug).Scan(&longURL)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return "", ErrNotFound{}
+			return "", ErrNotFound
 		}
 		return "", err
 	}

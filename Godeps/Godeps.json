@@ -16,6 +16,10 @@
 			"Rev": "9d4db5d1dbeff473d50e1bb82f5405c8cca0f0ac"
 		},
 		{
+			"ImportPath": "github.com/getsentry/raven-go",
+			"Rev": "3966f3ab8333308d76b6cc83a29776a266bbdd92"
+		},
+		{
 			"ImportPath": "github.com/gorilla/context",
 			"Rev": "215affda49addc4c8ef7e2534915df2c8c35c6cd"
 		},
@@ -34,8 +38,8 @@
 		},
 		{
 			"ImportPath": "gopkg.in/Clever/kayvee-go.v2",
-			"Comment": "v2.0.0",
-			"Rev": "6027372b81c7ac2294c5e4419ece8e04f0b740f1"
+			"Comment": "v2.2.1",
+			"Rev": "fddc4aae9aa6ca64c372e7d46b2d39cd9c597a68"
 		}
 	]
 }

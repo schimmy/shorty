@@ -1,43 +1,24 @@
+include golang.mk
+.DEFAULT_GOAL := test # override default goal set in library makefile
+
+.PHONY: test build clean doc vendor $(PKGS)
 SHELL := /bin/bash
 PKG := github.com/Clever/shorty
 PKGS := $(shell go list ./... | grep -v /vendor)
-EXECUTABLE := shorty
-.PHONY: test build clean doc vendor $(PKGS)
+EXECUTABLE := $(shell basename $(PKG))
+$(eval $(call golang-version-check,1.5))
 
-GOVERSION := $(shell go version | grep 1.5)
-ifeq "$(GOVERSION)" ""
-  $(error must be running Go version 1.5)
-endif
-export GO15VENDOREXPERIMENT=1
-
-all: build test
-
-test: $(PKGS)
-
-GOLINT := $(GOPATH)/bin/golint
-$(GOLINT):
-	@go get github.com/golang/lint/golint
-
-GODEP := $(GOPATH)/bin/godep
-$(GODEP):
-	@go get -u github.com/tools/godep
-
-$(PKGS): $(GOLINT)
-	@echo "FORMATTING..."
-	@gofmt -w=true $(GOPATH)/src/$@/*.go
-	@echo "LINTING..."
-	@$(GOLINT) $(GOPATH)/src/$@/*.go
-	@echo ""
-	@echo "TESTING..."
-	@go test -v $@
-	@echo ""
+all: test build
 
 build:
 	go build -o bin/$(EXECUTABLE) $(PKG)
 
 clean:
-	rm -rf build
+	rm bin/*
 
-vendor: $(GODEP)
-	$(GODEP) save $(PKGS)
-	find vendor/ -path '*/vendor' -type d | xargs -IX rm -r X # remove any nested vendor directories
+test: $(PKGS)
+$(PKGS): golang-test-all-deps
+	$(call golang-test-all,$@)
+
+vendor: golang-godep-vendor-deps
+	$(call golang-godep-vendor,$(PKGS))

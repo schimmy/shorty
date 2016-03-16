@@ -1,21 +1,24 @@
+include golang.mk
+.DEFAULT_GOAL := test # override default goal set in library makefile
+
+.PHONY: test build clean doc vendor $(PKGS)
 SHELL := /bin/bash
-PKG := github.com/schimmy/shorty
-PKGS := $(PKG) $(PKG)/db
-EXECUTABLE := shorty
+PKG := github.com/Clever/shorty
+PKGS := $(shell go list ./... | grep -v /vendor)
+EXECUTABLE := $(shell basename $(PKG))
+$(eval $(call golang-version-check,1.5))
 
-.PHONY: test $(PKGS) build clean
+all: test build
 
-test: $(PKGS)
+build:
+	go build -o bin/$(EXECUTABLE) $(PKG)
 
 clean:
-	rm -f $(GOPATH)/src/$(PKG)/build/$(EXECUTABLE)
+	rm bin/*
 
-build: clean
-	go build -o build/$(EXECUTABLE) $(PKG)
+test: $(PKGS)
+$(PKGS): golang-test-all-deps
+	$(call golang-test-all,$@)
 
-$(PKGS):
-ifeq ($(LINT),1)
-	golint $(GOPATH)/src/$@*/**.go
-endif
-	go get -d -t $@
-	go test $@ -test.v
+vendor: golang-godep-vendor-deps
+	$(call golang-godep-vendor,$(PKGS))

@@ -5,12 +5,16 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"runtime"
+	"os"
 
+	"github.com/Clever/shorty/db"
+	"github.com/Clever/shorty/routes"
 	"github.com/gorilla/mux"
-	"github.com/schimmy/shorty/db"
-	"github.com/schimmy/shorty/routes"
+	"gopkg.in/Clever/kayvee-go.v2/logger"
 )
+
+// msg is a convenience type for kayvee
+type msg map[string]interface{}
 
 const (
 	pgBackend    = "postgres"
@@ -23,14 +27,12 @@ var (
 	readonly = flag.Bool("readonly", false, "set readonly mode (useful for external-facing instance)")
 	protocol = flag.String("protocol", "http", "protocol for the short handler - useful to separate for external-facing separate instance")
 	domain   = flag.String("domain", "go", "set the domain for the short URL reported to the user")
+	lg       = logger.New("shorty")
 )
 
-func init() {
-	runtime.GOMAXPROCS(runtime.NumCPU())
-	flag.Parse()
-}
-
 func main() {
+	flag.Parse()
+
 	var sdb db.ShortenBackend
 	switch *database {
 	case pgBackend:
@@ -38,7 +40,9 @@ func main() {
 	case redisBackend:
 		sdb = db.NewRedisDB()
 	default:
-		log.Fatalf("'%s' backend is not offered", *database)
+		lg.ErrorD("missing-backed", msg{
+			"msg": fmt.Sprintf("'%s' backend is not offered", *database)})
+		os.Exit(1)
 	}
 
 	// default to ReadOnly mode for POSTs and list of slugs

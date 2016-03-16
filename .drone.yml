@@ -1,9 +1,12 @@
-image: bradrydzewski/go:1.4
+image: clever/drone-go:1.5
 notify:
   email:
     recipients:
       - drone@clever.com
 publish:
+  catapult:
+    url: $$catapult_url
+    application: "shorty"
   docker:
     docker_host: $$docker_server
     email: $$docker_email
@@ -16,12 +19,9 @@ publish:
     when:
       branch: master
 services:
-  - postgres
-  - redis
+- postgres
+- redis
 script:
-  - go get -t ./...
-  - sudo apt-get install -y postgresql-client
-  - createdb -h localhost -U postgres drone
-  - git log --stat -n 10
-  - bash integration_tests.sh
-  - make build
+- sudo apt-get install -y postgresql-client
+- bash integration_tests.sh
+- make build

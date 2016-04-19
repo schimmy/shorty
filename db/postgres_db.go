@@ -65,10 +65,12 @@ func (pgDB *PostgresDB) ShortenURL(slug, longURL, owner string, expires time.Tim
 	existingLong, err := pgDB.GetLongURL(slug)
 	if existingLong == "" || err != nil {
 		q := fmt.Sprintf("INSERT INTO %s.%s(slug, long_url, owner) VALUES($1, $2, $3)", pgDB.SchemaName, pgDB.TableName)
-		_, err := pgDB.c.Query(q, slug, longURL, owner)
+		r, err := pgDB.c.Query(q, slug, longURL, owner)
 		if err != nil {
 			return fmt.Errorf("Issue inserting new row for slug: %s, err is: %s", slug, err)
 		}
+		defer r.Close()
+
 		lg.InfoD("slug.new", logger.M{
 			"name":     slug,
 			"long_url": longURL,
@@ -78,10 +80,12 @@ func (pgDB *PostgresDB) ShortenURL(slug, longURL, owner string, expires time.Tim
 
 	// Otherwise, upsert
 	q := fmt.Sprintf("UPDATE %s.%s SET long_url=$2, owner=$3 WHERE slug=$1", pgDB.SchemaName, pgDB.TableName)
-	_, err = pgDB.c.Query(q, slug, longURL, owner)
+	r, err := pgDB.c.Query(q, slug, longURL, owner)
 	if err != nil {
 		return err
 	}
+	defer r.Close()
+
 	lg.InfoD("slug.update", logger.M{
 		"name":     slug,
 		"long_url": longURL,
@@ -109,6 +113,8 @@ func (pgDB *PostgresDB) GetList() ([]ShortenObject, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
+
 	var retObjs []ShortenObject
 	for rows.Next() {
 		var so ShortenObject

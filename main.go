@@ -10,11 +10,8 @@ import (
 	"github.com/Clever/shorty/db"
 	"github.com/Clever/shorty/routes"
 	"github.com/gorilla/mux"
-	"gopkg.in/Clever/kayvee-go.v2/logger"
+	"gopkg.in/Clever/kayvee-go.v3/logger"
 )
-
-// msg is a convenience type for kayvee
-type msg map[string]interface{}
 
 const (
 	pgBackend    = "postgres"
@@ -40,7 +37,7 @@ func main() {
 	case redisBackend:
 		sdb = db.NewRedisDB()
 	default:
-		lg.ErrorD("missing-backed", msg{
+		lg.CriticalD("missing-backed", logger.M{
 			"msg": fmt.Sprintf("'%s' backend is not offered", *database)})
 		os.Exit(1)
 	}
@@ -77,6 +74,6 @@ func main() {
 	r.PathPrefix("/").Handler(http.FileServer(http.Dir("./static")))
 	http.Handle("/", r)
 
-	fmt.Printf("Starting server on port: %s\n", *port)
+	lg.InfoD("starting-server", logger.M{"port": *port})
 	log.Fatal(http.ListenAndServe(":"+*port, nil))
 }

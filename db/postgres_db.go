@@ -8,6 +8,7 @@ import (
 
 	// this is standard procedure for registering a drive with db/sql
 	_ "github.com/lib/pq"
+	"gopkg.in/Clever/kayvee-go.v3/logger"
 )
 
 const (
@@ -35,7 +36,7 @@ func NewPostgresDB() ShortenBackend {
 	connString := fmt.Sprintf(connStr, pgHost, pgPort, pgUser, pgPass, pgDatabase, pgSSLMode)
 	db, err := sql.Open("postgres", connString)
 	if err != nil {
-		lg.ErrorD("postgres-failed-connection", msg{
+		lg.ErrorD("postgres-failed-connection", logger.M{
 			"msg": fmt.Sprintf("Failed to connect to postgres: %s", err)})
 		os.Exit(1)
 	}
@@ -53,8 +54,7 @@ func (pgDB *PostgresDB) DeleteURL(slug string) error {
 	if err != nil {
 		return err
 	}
-	lg.InfoD("slug.delete", msg{
-		"name": slug})
+	lg.InfoD("slug.delete", logger.M{"name": slug})
 	return nil
 
 }
@@ -69,7 +69,7 @@ func (pgDB *PostgresDB) ShortenURL(slug, longURL, owner string, expires time.Tim
 		if err != nil {
 			return fmt.Errorf("Issue inserting new row for slug: %s, err is: %s", slug, err)
 		}
-		lg.InfoD("slug.new", msg{
+		lg.InfoD("slug.new", logger.M{
 			"name":     slug,
 			"long_url": longURL,
 			"owner":    owner})
@@ -82,7 +82,7 @@ func (pgDB *PostgresDB) ShortenURL(slug, longURL, owner string, expires time.Tim
 	if err != nil {
 		return err
 	}
-	lg.InfoD("slug.update", msg{
+	lg.InfoD("slug.update", logger.M{
 		"name":     slug,
 		"long_url": longURL,
 		"owner":    owner})

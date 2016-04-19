@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/garyburd/redigo/redis"
+	"gopkg.in/Clever/kayvee-go.v3/logger"
 )
 
 const (
@@ -28,7 +29,7 @@ func NewRedisDB() ShortenBackend {
 	pool := newPool(redisURL)
 	conn, err := pool.Dial()
 	if err != nil {
-		lg.ErrorD("redis.connection.failure", msg{
+		lg.ErrorD("redis.connection.failure", logger.M{
 			"msg": fmt.Sprintf("Failed to connect to redis at '%s': %s", redisURL, err)})
 		os.Exit(1)
 	}
@@ -48,8 +49,7 @@ func (r Redis) DeleteURL(slug string) error {
 		return ErrNotFound
 	}
 
-	lg.InfoD("slug.delete", msg{
-		"name": slug})
+	lg.InfoD("slug.delete", logger.M{"name": slug})
 	return nil
 }
 

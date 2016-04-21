@@ -8,6 +8,7 @@ import (
 
 	// this is standard procedure for registering a drive with db/sql
 	_ "github.com/lib/pq"
+	"gopkg.in/Clever/kayvee-go.v3/logger"
 )
 
 const (
@@ -35,7 +36,7 @@ func NewPostgresDB() ShortenBackend {
 	connString := fmt.Sprintf(connStr, pgHost, pgPort, pgUser, pgPass, pgDatabase, pgSSLMode)
 	db, err := sql.Open("postgres", connString)
 	if err != nil {
-		lg.ErrorD("postgres-failed-connection", msg{
+		lg.ErrorD("postgres-failed-connection", logger.M{
 			"msg": fmt.Sprintf("Failed to connect to postgres: %s", err)})
 		os.Exit(1)
 	}
@@ -53,8 +54,7 @@ func (pgDB *PostgresDB) DeleteURL(slug string) error {
 	if err != nil {
 		return err
 	}
-	lg.InfoD("slug.delete", msg{
-		"name": slug})
+	lg.InfoD("slug.delete", logger.M{"name": slug})
 	return nil
 
 }
@@ -65,11 +65,13 @@ func (pgDB *PostgresDB) ShortenURL(slug, longURL, owner string, expires time.Tim
 	existingLong, err := pgDB.GetLongURL(slug)
 	if existingLong == "" || err != nil {
 		q := fmt.Sprintf("INSERT INTO %s.%s(slug, long_url, owner) VALUES($1, $2, $3)", pgDB.SchemaName, pgDB.TableName)
-		_, err := pgDB.c.Query(q, slug, longURL, owner)
+		r, err := pgDB.c.Query(q, slug, longURL, owner)
 		if err != nil {
 			return fmt.Errorf("Issue inserting new row for slug: %s, err is: %s", slug, err)
 		}
-		lg.InfoD("slug.new", msg{
+		defer r.Close()
+
+		lg.InfoD("slug.new", logger.M{
 			"name":     slug,
 			"long_url": longURL,
 			"owner":    owner})
@@ -78,11 +80,13 @@ func (pgDB *PostgresDB) ShortenURL(slug, longURL, owner string, expires time.Tim
 
 	// Otherwise, upsert
 	q := fmt.Sprintf("UPDATE %s.%s SET long_url=$2, owner=$3 WHERE slug=$1", pgDB.SchemaName, pgDB.TableName)
-	_, err = pgDB.c.Query(q, slug, longURL, owner)
+	r, err := pgDB.c.Query(q, slug, longURL, owner)
 	if err != nil {
 		return err
 	}
-	lg.InfoD("slug.update", msg{
+	defer r.Close()
+
+	lg.InfoD("slug.update", logger.M{
 		"name":     slug,
 		"long_url": longURL,
 		"owner":    owner})
@@ -109,6 +113,8 @@ func (pgDB *PostgresDB) GetList() ([]ShortenObject, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
+
 	var retObjs []ShortenObject
 	for rows.Next() {
 		var so ShortenObject

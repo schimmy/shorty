@@ -6,7 +6,7 @@ import (
 	"os"
 	"time"
 
-	"gopkg.in/Clever/kayvee-go.v2/logger"
+	"gopkg.in/Clever/kayvee-go.v3/logger"
 )
 
 var (
@@ -14,9 +14,6 @@ var (
 	ErrNotFound = errors.New("No items found by the db layer")
 	lg          = logger.New("shorty")
 )
-
-// msg is a convenience type for kayvee
-type msg map[string]interface{}
 
 // ShortenObject holds the metadata and the mapping for a shortened URL
 // I like the NullTime concept from the pq library, so even for other backends
@@ -45,7 +42,7 @@ func getOrDefault(key, def string) string {
 		return val
 	}
 
-	lg.InfoD("configuration", msg{
+	lg.InfoD("configuration", logger.M{
 		"msg": fmt.Sprintf("No value found for '%s', defaulting to '%s'", key, def)})
 	return def
 }

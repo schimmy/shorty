@@ -24,3 +24,5 @@ expose:
     health_check:
       type: http
       path: /health/check
+team:
+  - eng-ip

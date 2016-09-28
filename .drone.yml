@@ -2,11 +2,11 @@ image: clever/drone-go:1.7
 notify:
   email:
     recipients:
-      - drone@clever.com
+    - drone@clever.com
 publish:
   catapult:
     url: $$catapult_url
-    application: "shorty"
+    application: shorty
   docker:
     docker_host: $$docker_server
     email: $$docker_email
@@ -15,9 +15,10 @@ publish:
     image_name: clever/shorty
     registry_login: true
     tags:
-      - $(git rev-parse --short HEAD)
+    - $(git rev-parse --short HEAD)
     when:
       branch: master
+  report_card: {}
 services:
 - postgres
 - redis

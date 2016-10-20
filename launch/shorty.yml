@@ -24,4 +24,5 @@ expose:
     health_check:
       type: http
       path: /health/check
+access_scope: org-wide
 team: eng-ip

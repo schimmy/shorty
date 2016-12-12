@@ -1,7 +1,7 @@
 include golang.mk
 .DEFAULT_GOAL := test # override default goal set in library makefile
 
-.PHONY: test build clean doc vendor $(PKGS)
+.PHONY: test build clean doc vendor run $(PKGS)
 SHELL := /bin/bash
 PKG := github.com/Clever/shorty
 PKGS := $(shell go list ./... | grep -v /vendor)
@@ -22,3 +22,6 @@ $(PKGS): golang-test-all-deps
 
 vendor: golang-godep-vendor-deps
 	$(call golang-godep-vendor,$(PKGS))
+
+run: build
+	bin/$(EXECUTABLE) --port 8080

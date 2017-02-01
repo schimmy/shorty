@@ -1,7 +1,6 @@
 #!/bin/bash
 set -ex
 
-export REDIS_URL=$REDIS_PORT_6379_TCP_ADDR:$REDIS_PORT_6379_TCP_PORT
 export PG_USER=postgres
 export PG_HOST=localhost
 export PG_DATABASE=shortener

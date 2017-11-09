@@ -6,7 +6,7 @@ SHELL := /bin/bash
 PKG := github.com/Clever/shorty
 PKGS := $(shell go list ./... | grep -v /vendor)
 EXECUTABLE := $(shell basename $(PKG))
-$(eval $(call golang-version-check,1.8))
+$(eval $(call golang-version-check,1.9))
 
 all: test build
 
@@ -20,8 +20,10 @@ test: $(PKGS)
 $(PKGS): golang-test-all-deps
 	$(call golang-test-all,$@)
 
-vendor: golang-godep-vendor-deps
-	$(call golang-godep-vendor,$(PKGS))
 
 run: build
 	bin/$(EXECUTABLE) --port 8080
+
+
+install_deps: golang-dep-vendor-deps
+	$(call golang-dep-vendor)

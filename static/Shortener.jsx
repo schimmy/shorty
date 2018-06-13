@@ -44,7 +44,7 @@ var Shortener = React.createClass({
       },
       type: "POST",
       success: function() {
-        newLink = this.state.protocol + "://" + "/" + slug;
+        newLink = this.state.protocol + "://" + this.state.domain + "/" + slug;
         this.refreshList();
         flash = <Alert bsStyle="success">Successfully linked URL: <a href={newLink}>{newLink}</a></Alert>
         this.setState({currentOwner: owner, flash: flash});

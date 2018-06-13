@@ -141,7 +141,7 @@ func TestDelete(t *testing.T) {
 	assert.Nil(t, err, "Failed to delete '%s' with '%s': %s", s, datastoreType, err)
 
 	newLong, err := datastore.GetLongURL(s)
-	assert.Equal(t, ErrNotFound{}, err,
+	assert.Equal(t, ErrNotFound, err,
 		fmt.Sprintf("Record %s on %s should have returned not found, instead found: %s with err %s",
 			s, datastoreType, newLong, err))
 }

@@ -1,5 +1,7 @@
 # Shorty: A Simple, Self-Hosted URL Shortener
 
+[![GoDoc](https://godoc.org/github.com/Clever/shorty?status.svg)](http://godoc.org/github.com/Clever/shorty)
+
 What, you need more information than the title?
 
 I looked around and found a bunch of toy examples of backend URL shorteners in Go, or PHP/MySQL solutions which seemed complicated and less-than-fully-featured.

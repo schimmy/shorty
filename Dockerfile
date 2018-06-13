@@ -1,14 +1,9 @@
-# shorty URL shortener service
-FROM golang:1.4
+FROM debian:jessie
 
-ENV service "shorty"
-ENV dir "/go/src/github.com/schimmy/$service"
+# put all static files in /var/www
+RUN mkdir -p /var/www/shorty/static
+ADD static /var/www/shorty/static
+WORKDIR /var/www/shorty
 
-RUN mkdir -p "$dir"
-ADD . "$dir"
-WORKDIR "$dir"
-
-RUN go get ./...
-RUN go build
-
-CMD ["./shorty"]
+COPY bin/shorty /usr/bin/shorty
+CMD ["shorty"]

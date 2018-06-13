@@ -12,12 +12,17 @@ env:
   - PG_PASSWORD
   - PG_SCHEMA
   - PG_TABLE
+  - PG_DATABASE
 resources:
   cpu: 0.2
 expose:
   - name: http
     port: 80
     bind: 80
+    load_balancer_port: 80
+    load_balancer_proto: http
     health_check:
       type: http
       path: /health/check
+access_scope: org-wide
+team: eng-ip
